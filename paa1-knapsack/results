@@ -1,0 +1,19 @@
+Results:
+Relative error:
+n    error
+4    0.021745081134443733
+20    0.006000856194546453
+10    0.012861985803957563
+15    0.0047589181659385745
+BruteForce Times: 
+n    time [ms]
+4    2.62
+20    24240.2
+10    11.28
+15    451.6
+PriceWeghtHeuristic Times: 
+n    time [ms]
+4    2.26
+20    1.0
+10    1.54
+15    1.18

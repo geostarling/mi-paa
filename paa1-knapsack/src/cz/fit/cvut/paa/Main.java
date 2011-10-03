@@ -8,7 +8,6 @@ import java.util.Map;
 import cz.cvut.felk.cig.jcop.algorithm.graphsearch.bfs.BreadthFirstSearch;
 import cz.cvut.felk.cig.jcop.problem.knapsack.Knapsack;
 import cz.cvut.felk.cig.jcop.result.ResultEntry;
-import cz.cvut.felk.cig.jcop.result.render.SimpleRender;
 import cz.cvut.felk.cig.jcop.solver.SimpleSolver;
 import cz.cvut.felk.cig.jcop.solver.Solver;
 
@@ -16,11 +15,11 @@ public class Main {
 
 	private static final String[] DATA_FILES = { "data/knap_4.inst.dat",
 			"data/knap_10.inst.dat", "data/knap_15.inst.dat",
-			"data/knap_20.inst.dat", "data/knap_22.inst.dat",
-			"data/knap_25.inst.dat", "data/knap_27.inst.dat",
-			"data/knap_30.inst.dat", "data/knap_32.inst.dat",
-			"data/knap_35.inst.dat", "data/knap_37.inst.dat",
-			"data/knap_40.inst.dat"
+			"data/knap_20.inst.dat"//, "data/knap_22.inst.dat",
+	//		"data/knap_25.inst.dat", "data/knap_27.inst.dat",
+		//	"data/knap_30.inst.dat", "data/knap_32.inst.dat",
+		//	"data/knap_35.inst.dat", "data/knap_37.inst.dat",
+		//	"data/knap_40.inst.dat"
 
 	};
 
@@ -87,9 +86,9 @@ public class Main {
 
 			double bruteFitness = bruteEntry.getBestFitness();
 			double pwhFitness = pwhEntry.getBestFitness();
-			bruteTimeSum += bruteEntry.getStartTimestamp().getClockTimeSpent(
+			bruteTimeSum += bruteEntry.getStartTimestamp().getCpuTimeSpent(
 					bruteEntry.getStopTimestamp());
-			pwhTimeSum += pwhEntry.getStartTimestamp().getClockTimeSpent(
+			pwhTimeSum += pwhEntry.getStartTimestamp().getCpuTimeSpent(
 					pwhEntry.getStopTimestamp());
 
 			relErrorSum += (bruteFitness - pwhFitness) / bruteFitness;
