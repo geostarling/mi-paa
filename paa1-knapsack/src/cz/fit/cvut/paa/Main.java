@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import cz.cvut.felk.cig.jcop.algorithm.graphsearch.bfs.BreadthFirstSearch;
+import cz.cvut.felk.cig.jcop.algorithm.graphsearch.dfs.DepthFirstSearch;
 import cz.cvut.felk.cig.jcop.problem.knapsack.Knapsack;
 import cz.cvut.felk.cig.jcop.result.ResultEntry;
 import cz.cvut.felk.cig.jcop.solver.SimpleSolver;
@@ -15,15 +15,16 @@ public class Main {
 
 	private static final String[] DATA_FILES = { "data/knap_4.inst.dat",
 			"data/knap_10.inst.dat", "data/knap_15.inst.dat",
-			"data/knap_20.inst.dat"//, "data/knap_22.inst.dat",
-	//		"data/knap_25.inst.dat", "data/knap_27.inst.dat",
-		//	"data/knap_30.inst.dat", "data/knap_32.inst.dat",
-		//	"data/knap_35.inst.dat", "data/knap_37.inst.dat",
-		//	"data/knap_40.inst.dat"
+			"data/knap_20.inst.dat"// , "data/knap_22.inst.dat",
+	// "data/knap_25.inst.dat", "data/knap_27.inst.dat",
+	// "data/knap_30.inst.dat", "data/knap_32.inst.dat",
+	// "data/knap_35.inst.dat", "data/knap_37.inst.dat",
+	// "data/knap_40.inst.dat"
 
 	};
 
 	private static Map<Integer, Double> relErrorsMap = new HashMap<Integer, Double>();
+	private static Map<Integer, Double> maxErrorsMap = new HashMap<Integer, Double>();
 	private static Map<Integer, Double> bruteAvgTimeMap = new HashMap<Integer, Double>();
 	private static Map<Integer, Double> pwhAvgTimeMap = new HashMap<Integer, Double>();
 
@@ -35,9 +36,15 @@ public class Main {
 		}
 
 		System.out.println("Results:");
-		System.out.println("Relative error:");
-		System.out.println("n    error");
+		System.out.println("Relative error Avg:");
+		System.out.println("n    error [%]");
 		for (Map.Entry<Integer, Double> entry : relErrorsMap.entrySet()) {
+			System.out.println(entry.getKey() + "    " + entry.getValue());
+		}
+
+		System.out.println("Relative error Max:");
+		System.out.println("n    error [%]");
+		for (Map.Entry<Integer, Double> entry : maxErrorsMap.entrySet()) {
 			System.out.println(entry.getKey() + "    " + entry.getValue());
 		}
 
@@ -47,7 +54,7 @@ public class Main {
 			System.out.println(entry.getKey() + "    " + entry.getValue());
 		}
 
-		System.out.println("PriceWeghtHeuristic Times: ");
+		System.out.println("PriceWeightHeuristic Times: ");
 		System.out.println("n    time [ms]");
 		for (Map.Entry<Integer, Double> entry : pwhAvgTimeMap.entrySet()) {
 			System.out.println(entry.getKey() + "    " + entry.getValue());
@@ -61,23 +68,25 @@ public class Main {
 		double relErrorSum = 0.0;
 		double bruteTimeSum = 0.0;
 		double pwhTimeSum = 0.0;
+		double maxError = 0.0;
 		int dimension = (new Knapsack(new File(datafile))).getDimension();
 
 		for (int id = startId; id < startId + 50; id++) {
 			System.out.println("Processing: " + id);
-			Solver bruteSolver = new SimpleSolver(new BreadthFirstSearch(),
+			Solver bruteSolver = new SimpleSolver(new DepthFirstSearch(),
 					new Knapsack(new File(datafile), Integer.toString(id)));
 			// bruteSolver.addListener(new JFreeChartRender("Test"));
-			//bruteSolver
-			//		.addRender(new SimpleRender(SimpleRender.OUTPUT_STANDARD));
+			// bruteSolver
+			// .addRender(new SimpleRender(SimpleRender.OUTPUT_STANDARD));
 			bruteSolver.run();
-			//bruteSolver.render();
+			// bruteSolver.render();
 
 			Solver pwhSolver = new SimpleSolver(new PriceWeightHeuristic(),
 					new MyKnapsack(new File(datafile), Integer.toString(id)));
-			//pwhSolver.addRender(new SimpleRender(SimpleRender.OUTPUT_STANDARD));
+			// pwhSolver.addRender(new
+			// SimpleRender(SimpleRender.OUTPUT_STANDARD));
 			pwhSolver.run();
-			//pwhSolver.render();
+			// pwhSolver.render();
 
 			ResultEntry bruteEntry = bruteSolver.getResult().getResultEntries()
 					.get(0);
@@ -91,13 +100,17 @@ public class Main {
 			pwhTimeSum += pwhEntry.getStartTimestamp().getCpuTimeSpent(
 					pwhEntry.getStopTimestamp());
 
-			relErrorSum += (bruteFitness - pwhFitness) / bruteFitness;
+			double relError = ((bruteFitness - pwhFitness) / bruteFitness) * 100;
+			if (relError > maxError) {
+				maxError = relError;
+			}
+			relErrorSum += relError;
 
 		}
 
 		relErrorsMap.put(new Integer(dimension), relErrorSum / 50);
 		bruteAvgTimeMap.put(new Integer(dimension), bruteTimeSum / 50);
 		pwhAvgTimeMap.put(new Integer(dimension), pwhTimeSum / 50);
-
+		maxErrorsMap.put(new Integer(dimension), maxError);
 	}
 }

@@ -38,7 +38,6 @@ public class MyKnapsack extends Knapsack {
 		for (KnapsackItem ki : knapsackItems) {
 			orderedItems.add(ki);
 		}
-
 	}
 
 	public KnapsackIterator getOperationIterator(Configuration configuration) {
