@@ -40,11 +40,11 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 		int startIdx;
 		int endIdx;
-		// int startIdx = 0;
-		// int endIdx = 4;
-		// for (int i = startIdx; i < endIdx; i++) {
-		// runExperiment(DATA_FILES[i], 9000 + 50 * i);
-		// }
+		startIdx = 0;
+		endIdx = 4;
+		for (int i = startIdx; i < endIdx; i++) {
+			runExperiment(DATA_FILES[i], 9000 + 50 * i);
+		}
 
 		startIdx = 4;
 		endIdx = 12;
