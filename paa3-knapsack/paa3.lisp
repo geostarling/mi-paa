@@ -117,3 +117,35 @@
 
 (defun get-max-reachable-price (config knap)
   (+ (get-price config knap) (apply #'+ (mapcar #'cdr (nthcdr (list-length config) (knapsack-items knap))))))
+
+
+;================================================================================
+
+(defun dyn-algorithm (knap)
+  (let ((memory-arr (make-array 
+			(list (knapsack-capacity knap) 
+			      (list-length (knapsack-items knap))) :initial-element 0)))
+    (dyn-algorithm-iter memory-arr (knapsack-items knap) 1 1 (knapsack-capacity knap))
+))
+
+(defun dyn-algorithm-iter (memory-arr knap-items weight-idx item-idx capacity)
+  (let ((item-weight (caar knap-items)) 
+	(item-price (cdar knap-items)))
+    (print memory-arr)
+    (if (<= item-weight weight-idx)
+	(if (> 
+	     (+ item-price (aref memory-arr (- weight-idx item-weight) (1- item-idx)))
+	     (aref memory-arr weight-idx (1- item-idx)))
+	    (setf (aref memory-arr weight-idx item-idx) 
+		  (+ item-price (aref memory-arr (- weight-idx item-weight) (1- item-idx))))
+	    (setf (aref memory-arr weight-idx item-idx) 
+		  (aref memory-arr weight-idx (1- item-idx))))
+	(setf (aref memory-arr weight-idx item-idx) 
+	      (aref memory-arr weight-idx (1- item-idx))))
+    (if (= weight-idx (1- capacity))
+	(setf weight-idx 0 item-idx (1+ item-idx) knap-items (cdr knap-items))
+	(incf weight-idx))
+    (if (not knap-items)
+	T ; ukoncovaci podminka, doresit prelizajici meze
+	(dyn-algorithm-iter memory-arr knap-items weight-idx item-idx capacity))))
+  
