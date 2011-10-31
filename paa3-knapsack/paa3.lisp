@@ -1,6 +1,5 @@
 ;-*-Lisp-*-
 
-
 (defun string-split (string)
   (loop :for start := 0 :then (1+ finish)
         :for finish := (position #\Space string :start start)
@@ -124,9 +123,25 @@
 (defun dyn-algorithm (knap)
   (let ((memory-arr (make-array 
 			(list (knapsack-capacity knap) 
-			      (list-length (knapsack-items knap))) :initial-element 0)))
-    (dyn-algorithm-iter memory-arr (knapsack-items knap) 1 1 (knapsack-capacity knap))
-))
+			      (list-length (knapsack-items knap))) :initial-element 0))
+	(knap-items (knapsack-items knap)))
+    ;(dyn-algorithm-iter memory-arr (knapsack-items knap) 1 1 (knapsack-capacity knap))
+    (loop for i from 0 below (list-length (knapsack-items knap)) do
+	 (loop for w from 0 below (knapsack-capacity knap) do 
+	      (let ((item-weight (caar knap-items)) 
+		    (item-price (cdar knap-items)))
+		(print memory-arr)
+		(if (<= item-weight w)
+		    (if (> 
+			 (+ item-price (aref memory-arr (- w item-weight) (1- i)))
+			 (aref memory-arr w (1- i)))
+			(setf (aref memory-arr w i) 
+		  (+ item-price (aref memory-arr (- w item-weight) (1- i))))
+	    (setf (aref memory-arr w i) 
+		  (aref memory-arr w (1- i))))
+		    (setf (aref memory-arr w i) 
+			  (aref memory-arr w (1- i))))))
+	 (setf knap-items (cdr knap-items)))))
 
 (defun dyn-algorithm-iter (memory-arr knap-items weight-idx item-idx capacity)
   (let ((item-weight (caar knap-items)) 
