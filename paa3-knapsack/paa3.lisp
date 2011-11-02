@@ -1,4 +1,4 @@
-;-*-Lisp-*-
+(declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 (defun string-split (string)
   (loop :for start := 0 :then (1+ finish)
@@ -43,7 +43,7 @@
 	(close in)))))
 
 (defun load-all ()
-  (load-knapsack "data/knap_10.inst.dat"))
+  (load-knapsack "data/knap_4.inst.dat"))
 
 (defun get-price (config knap)
   (get-price-iter config (knapsack-items knap) 0))
@@ -122,45 +122,27 @@
 
 (defun dyn-algorithm (knap)
   (let ((memory-arr (make-array 
-			(list (knapsack-capacity knap) 
-			      (list-length (knapsack-items knap))) :initial-element 0))
+		     (list (knapsack-capacity knap) 
+			   (1+ (list-length (knapsack-items knap)))) :initial-element 0))
 	(knap-items (knapsack-items knap)))
-    ;(dyn-algorithm-iter memory-arr (knapsack-items knap) 1 1 (knapsack-capacity knap))
-    (loop for i from 0 below (list-length (knapsack-items knap)) do
-	 (loop for w from 0 below (knapsack-capacity knap) do 
+					;(dyn-algorithm-iter memory-arr (knapsack-items knap) 1 1 (knapsack-capacity knap))
+    (loop for i from 1 below (1+ (list-length (knapsack-items knap))) do
+	 (loop for w from 1 below (knapsack-capacity knap) do 
 	      (let ((item-weight (caar knap-items)) 
 		    (item-price (cdar knap-items)))
+		(print w)
+		(print i)
+		(print item-weight)
 		(print memory-arr)
 		(if (<= item-weight w)
 		    (if (> 
 			 (+ item-price (aref memory-arr (- w item-weight) (1- i)))
 			 (aref memory-arr w (1- i)))
 			(setf (aref memory-arr w i) 
-		  (+ item-price (aref memory-arr (- w item-weight) (1- i))))
-	    (setf (aref memory-arr w i) 
-		  (aref memory-arr w (1- i))))
+			      (+ item-price (aref memory-arr (- w item-weight) (1- i))))
+			(setf (aref memory-arr w i) 
+			      (aref memory-arr w (1- i))))
 		    (setf (aref memory-arr w i) 
 			  (aref memory-arr w (1- i))))))
 	 (setf knap-items (cdr knap-items)))))
 
-(defun dyn-algorithm-iter (memory-arr knap-items weight-idx item-idx capacity)
-  (let ((item-weight (caar knap-items)) 
-	(item-price (cdar knap-items)))
-    (print memory-arr)
-    (if (<= item-weight weight-idx)
-	(if (> 
-	     (+ item-price (aref memory-arr (- weight-idx item-weight) (1- item-idx)))
-	     (aref memory-arr weight-idx (1- item-idx)))
-	    (setf (aref memory-arr weight-idx item-idx) 
-		  (+ item-price (aref memory-arr (- weight-idx item-weight) (1- item-idx))))
-	    (setf (aref memory-arr weight-idx item-idx) 
-		  (aref memory-arr weight-idx (1- item-idx))))
-	(setf (aref memory-arr weight-idx item-idx) 
-	      (aref memory-arr weight-idx (1- item-idx))))
-    (if (= weight-idx (1- capacity))
-	(setf weight-idx 0 item-idx (1+ item-idx) knap-items (cdr knap-items))
-	(incf weight-idx))
-    (if (not knap-items)
-	T ; ukoncovaci podminka, doresit prelizajici meze
-	(dyn-algorithm-iter memory-arr knap-items weight-idx item-idx capacity))))
-  
