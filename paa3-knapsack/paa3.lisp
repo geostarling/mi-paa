@@ -45,6 +45,11 @@
 (defun load-all ()
   (load-knapsack "data/knap_4.inst.dat"))
 
+(defun load-first () 
+  (let ((knap (car (load-all))))
+    (setf (knapsack-items knap) (reverse (knapsack-items knap)))
+    knap))
+
 (defun get-price (config knap)
   (get-price-iter config (knapsack-items knap) 0))
 
@@ -122,27 +127,41 @@
 
 (defun dyn-algorithm (knap)
   (let ((memory-arr (make-array 
-		     (list (knapsack-capacity knap) 
+		     (list (1+ (knapsack-capacity knap))
 			   (1+ (list-length (knapsack-items knap)))) :initial-element 0))
-	(knap-items (knapsack-items knap)))
-					;(dyn-algorithm-iter memory-arr (knapsack-items knap) 1 1 (knapsack-capacity knap))
+	(knap-items (knapsack-items knap))
+	(capacity (knapsack-capacity knap)))
+;    (break)
     (loop for i from 1 below (1+ (list-length (knapsack-items knap))) do
-	 (loop for w from 1 below (knapsack-capacity knap) do 
+	 (loop for w from 0 upto capacity do 
 	      (let ((item-weight (caar knap-items)) 
-		    (item-price (cdar knap-items)))
-		(print w)
-		(print i)
-		(print item-weight)
-		(print memory-arr)
+		    (item-price (cdar knap-items)))		
+		(break)	
+		(format t "~% ============== ~% Loop values are: ~% W: ~D ~% I: ~D ~% ITEM-WEIGHT: ~D ~% ITEM-PRICE: ~D ~%" W I ITEM-WEIGHT ITEM-PRICE)
 		(if (<= item-weight w)
 		    (if (> 
 			 (+ item-price (aref memory-arr (- w item-weight) (1- i)))
 			 (aref memory-arr w (1- i)))
-			(setf (aref memory-arr w i) 
-			      (+ item-price (aref memory-arr (- w item-weight) (1- i))))
-			(setf (aref memory-arr w i) 
-			      (aref memory-arr w (1- i))))
-		    (setf (aref memory-arr w i) 
-			  (aref memory-arr w (1- i))))))
-	 (setf knap-items (cdr knap-items)))))
+			(progn
+			  (break)
+			  (setf (aref memory-arr w i) 
+				(+ item-price (aref memory-arr (- w item-weight) (1- i)))))
+			(progn
+			  (break)			  
+			  (setf (aref memory-arr w i) 
+				(aref memory-arr w (1- i)))))
+		    (progn
+		      (break)
+		      (setf (aref memory-arr w i) 
+			    (aref memory-arr w (1- i)))))
+	 (show-board memory-arr)))
+	      (setf knap-items (cdr knap-items)))))
+
+
+(defun show-board (board)
+  (loop for i below (car (array-dimensions board)) do
+       (loop for j below (cadr (array-dimensions board)) do
+          (let ((cell (aref board i j)))
+            (format t "~a " cell)))
+       (format t "~%")))
 
