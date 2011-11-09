@@ -43,7 +43,7 @@
 	(close in)))))
 
 (defun load-all ()
-  (load-knapsack "data/knap_4.inst.dat"))
+  (load-knapsack "data/knap_40.inst.dat"))
 
 (defun load-first () 
   (let ((knap (car (load-all))))
@@ -90,8 +90,8 @@
 
 (defun bb-algorithm-optimize (knap stack res)
   (let ((stack-top (pop stack)))    
-    (print "Top of stack contains: ")
-    (prin1 stack-top)
+    ;(print "Top of stack contains: ")
+    ;(prin1 stack-top)
     (incf (result-step-counter res))
     (cond ((not stack-top) res)
 	  ((is-overweight? stack-top knap) (bb-algorithm-optimize knap 
@@ -136,26 +136,42 @@
 	 (loop for w from 0 upto capacity do 
 	      (let ((item-weight (caar knap-items)) 
 		    (item-price (cdar knap-items)))		
-		(break)	
+		;(break)	
 		(format t "~% ============== ~% Loop values are: ~% W: ~D ~% I: ~D ~% ITEM-WEIGHT: ~D ~% ITEM-PRICE: ~D ~%" W I ITEM-WEIGHT ITEM-PRICE)
 		(if (<= item-weight w)
 		    (if (> 
 			 (+ item-price (aref memory-arr (- w item-weight) (1- i)))
 			 (aref memory-arr w (1- i)))
 			(progn
-			  (break)
+			  ;(break)
 			  (setf (aref memory-arr w i) 
 				(+ item-price (aref memory-arr (- w item-weight) (1- i)))))
 			(progn
-			  (break)			  
+			  ;(break)			  
 			  (setf (aref memory-arr w i) 
 				(aref memory-arr w (1- i)))))
 		    (progn
-		      (break)
+		      ;(break)
 		      (setf (aref memory-arr w i) 
 			    (aref memory-arr w (1- i)))))
-	 (show-board memory-arr)))
-	      (setf knap-items (cdr knap-items)))))
+		;(show-board memory-arr)
+		))
+	 (setf knap-items (cdr knap-items)))
+    (make-result :solution (dyn-get-solution memory-arr) :step-counter 0)))
+
+
+
+(defun dyn-get-solution (mem-arr)
+  (let ((result-sol nil) 
+	(prev-value 0)
+	(last-row-idx (1- (array-dimension mem-arr 0)))
+	(last-col-idx (1- (array-dimension mem-arr 1))))
+    (loop for i from 1 upto last-col-idx do
+	 (if (= (aref mem-arr last-row-idx i) prev-value)
+	     (setf result-sol (cons 0 result-sol))
+	     (setf result-sol (cons 1 result-sol)))
+	 (setf prev-value (aref mem-arr last-row-idx i)))
+    (reverse result-sol)))
 
 
 (defun show-board (board)
