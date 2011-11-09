@@ -1,4 +1,4 @@
-(declaim (optimize (speed 0) (safety 3) (debug 3)))
+(declaim (optimize (speed 3) (safety 3) (debug 0)))
 
 (defun string-split (string)
   (loop :for start := 0 :then (1+ finish)
@@ -93,25 +93,27 @@
     ;(print "Top of stack contains: ")
     ;(prin1 stack-top)
     (incf (result-step-counter res))
-    (cond ((not stack-top) res)
-	  ((is-overweight? stack-top knap) (bb-algorithm-optimize knap 
-								  stack 
-								  res))
-	  (T (let ((child-states (get-child-states 
-				  stack-top 
-				  (list-length (knapsack-items knap)))))
-	       (when (> (get-price stack-top knap) (get-price (result-solution res) knap))
-		 (setf (result-solution res) stack-top))
-	       (if (not child-states)
-		   (bb-algorithm-optimize knap stack res)
-		   (progn
-		     (when (> (get-max-reachable-price (car child-states) knap)
-			      (get-price (result-solution res) knap))
-		       (push (car child-states) stack))  
-		     (when (> (get-max-reachable-price (cadr child-states) knap)
-			      (get-price (result-solution res) knap))
-		       (push (cadr child-states) stack))
-		     (bb-algorithm-optimize knap stack res))))))))
+    (if (not stack-top) 
+	res
+	(let ((child-states (get-child-states 
+			     stack-top 
+			     (list-length (knapsack-items knap)))))
+	  (when (not (is-overweight? stack-top knap))
+	      (when (> (get-price stack-top knap) (get-price (result-solution res) knap))
+		(setf (result-solution res) stack-top))
+	      (when child-states
+		(when (> (get-max-reachable-price (car child-states) knap)
+			 (get-price (result-solution res) knap))
+		  (push (car child-states) stack))  
+		(when (> (get-max-reachable-price (cadr child-states) knap)
+			 (get-price (result-solution res) knap))
+		  (push (cadr child-states) stack))))
+	  (bb-algorithm-optimize knap stack res)))))
+
+(defun iter (a)
+(iter (- a) ))
+
+
 
 (defun get-child-states (config num-items)
   (if (eql (list-length config) num-items)
