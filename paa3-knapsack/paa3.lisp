@@ -1,4 +1,4 @@
-(declaim (optimize (speed 3) (safety 3) (debug 0)))
+(declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 (defun string-split (string)
   (loop :for start := 0 :then (1+ finish)
@@ -8,7 +8,7 @@
 
 
 (defstruct knapsack id n capacity items)
-(defstruct result solution step-counter start-time end-time)  
+(defstruct result id solution step-counter start-time end-time)  
 
     
 (defun proc-items (items-str-list items) 
@@ -84,7 +84,7 @@
   (let ((stack nil))
     (push '(0) stack)
     (push '(1) stack)
-    (bb-algorithm-optimize knapsack stack (make-result :solution NIL :step-counter 0))
+    (bb-algorithm-optimize knapsack stack (make-result :id (knapsack-id knapsack) :solution NIL :step-counter 0))
     ))
   
 
@@ -94,7 +94,9 @@
     ;(prin1 stack-top)
     (incf (result-step-counter res))
     (if (not stack-top) 
-	res
+	(progn 
+	  (setf (result-solution res) (reverse (result-solution res)))
+	  res)
 	(let ((child-states (get-child-states 
 			     stack-top 
 			     (list-length (knapsack-items knap)))))
@@ -109,10 +111,6 @@
 			 (get-price (result-solution res) knap))
 		  (push (cadr child-states) stack))))
 	  (bb-algorithm-optimize knap stack res)))))
-
-(defun iter (a)
-(iter (- a) ))
-
 
 
 (defun get-child-states (config num-items)
@@ -139,7 +137,7 @@
 	      (let ((item-weight (caar knap-items)) 
 		    (item-price (cdar knap-items)))		
 		;(break)	
-		(format t "~% ============== ~% Loop values are: ~% W: ~D ~% I: ~D ~% ITEM-WEIGHT: ~D ~% ITEM-PRICE: ~D ~%" W I ITEM-WEIGHT ITEM-PRICE)
+		;(format t "~% ============== ~% Loop values are: ~% W: ~D ~% I: ~D ~% ITEM-WEIGHT: ~D ~% ITEM-PRICE: ~D ~%" W I ITEM-WEIGHT ITEM-PRICE)
 		(if (<= item-weight w)
 		    (if (> 
 			 (+ item-price (aref memory-arr (- w item-weight) (1- i)))
@@ -159,7 +157,8 @@
 		;(show-board memory-arr)
 		))
 	 (setf knap-items (cdr knap-items)))
-    (make-result :solution (dyn-get-solution memory-arr) :step-counter 0)))
+    (show-board memory-arr)
+    (make-result :id (knapsack-id knap) :solution (dyn-get-solution memory-arr) :step-counter 0)))
 
 
 
@@ -182,4 +181,42 @@
           (let ((cell (aref board i j)))
             (format t "~a " cell)))
        (format t "~%")))
+
+
+
+(defun dyn-td-algorithm (knap)
+  (let ((memory (make-hash-table :test 'equal)))
+    (dyn-td-algorithm-iter (knapsack-items knap) (knapsack-capacity knap) memory)))
+
+(defun dyn-td-algorithm-iter (items capacity memory)
+  (let* (
+	(result nil)
+	(item (car items))
+	(item-weight (caar items))
+	(item-price (cdar items))
+	(mem-result (gethash (list item capacity) memory)) ; may be NIL!
+	)
+    (cond 
+      ((not items) 
+       (progn
+;	 (print "not items")
+	 (setf result 0)))
+      (mem-result
+       (progn 
+;	 (print "mem-result")
+	(setf result mem-result)))
+      ((> item-weight capacity)
+       (progn
+;	 (print "overweight")
+	 (setf result (dyn-td-algorithm-iter (cdr items) capacity memory))))
+      (T
+       (progn 
+;	 (print "else")
+	 (setf result (max 
+		       (+ item-price (dyn-td-algorithm-iter (cdr items) (- capacity item-weight) memory))
+		       (dyn-td-algorithm-iter (cdr items) capacity memory))))))
+    (setf (gethash (list item capacity) memory) result)
+    result))
+
+
 
