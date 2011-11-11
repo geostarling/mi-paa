@@ -8,7 +8,7 @@
 
 
 (defstruct knapsack id n capacity items)
-(defstruct result id solution step-counter start-time end-time)  
+(defstruct result id solution price step-counter start-time end-time)  
 
     
 (defun proc-items (items-str-list items) 
@@ -43,7 +43,7 @@
 	(close in)))))
 
 (defun load-all ()
-  (load-knapsack "data/knap_40.inst.dat"))
+  (load-knapsack "data/knap_20.inst.dat"))
 
 (defun load-first () 
   (let ((knap (car (load-all))))
@@ -185,38 +185,63 @@
 
 
 (defun dyn-td-algorithm (knap)
-  (let ((memory (make-hash-table :test 'equal)))
-    (dyn-td-algorithm-iter (knapsack-items knap) (knapsack-capacity knap) memory)))
+  (let ((memory (make-hash-table :test 'equal))
+	(result (make-result :id (knapsack-id knap) :step-counter 0)))
+    (dyn-td-algorithm-iter (knapsack-items knap) (knapsack-capacity knap) memory result)
+    (setf (result-solution  result) (get-dyn-td-results knap memory))
+    (print memory)
+    result
+    ))
 
-(defun dyn-td-algorithm-iter (items capacity memory)
+(defun dyn-td-algorithm-iter (items capacity memory result)
   (let* (
-	(result nil)
-	(item (car items))
-	(item-weight (caar items))
-	(item-price (cdar items))
-	(mem-result (gethash (list item capacity) memory)) ; may be NIL!
-	)
+	 (price nil)
+	 (item (car items))
+	 (item-weight (caar items))
+	 (item-price (cdar items))
+	 (mem-result (gethash (list item capacity) memory)) ; may be NIL!
+	 )
     (cond 
       ((not items) 
-       (progn
-;	 (print "not items")
-	 (setf result 0)))
+       (setf price 0))
       (mem-result
-       (progn 
-;	 (print "mem-result")
-	(setf result mem-result)))
+       (setf price mem-result))
       ((> item-weight capacity)
-       (progn
-;	 (print "overweight")
-	 (setf result (dyn-td-algorithm-iter (cdr items) capacity memory))))
+       (setf price (dyn-td-algorithm-iter (cdr items) capacity memory result)))
       (T
-       (progn 
-;	 (print "else")
-	 (setf result (max 
-		       (+ item-price (dyn-td-algorithm-iter (cdr items) (- capacity item-weight) memory))
-		       (dyn-td-algorithm-iter (cdr items) capacity memory))))))
-    (setf (gethash (list item capacity) memory) result)
-    result))
+       (setf price (max 
+		    (+ item-price (dyn-td-algorithm-iter (cdr items) (- capacity item-weight) memory result))
+		    (dyn-td-algorithm-iter (cdr items) capacity memory result)))))
+    (setf (gethash (list item capacity) memory) price)
+    (setf (result-step-counter result) (1+ (result-step-counter result)))
+    price))
 
 
 
+(defun get-dyn-td-results (knapsack memory)
+  (get-dyn-td-results-iter 
+   (knapsack-items knapsack) 
+   (knapsack-capacity knapsack ) 
+   memory 
+   nil) 
+  )
+
+(defun get-dyn-td-results-iter (items capacity memory solution)
+  (let* ((item (car items))
+	 (item-weight (car item))	 
+	 (next-item (cadr items)))
+    (cond 
+      ((not items) 
+       solution)
+      ((= (gethash (list item capacity) memory) (gethash (list next-item capacity) memory))
+       (setf solution (cons 0 solution))
+       (get-dyn-td-results-iter (cdr items) capacity memory solution))
+      (T 
+       (setf solution (cons 1 solution))
+       (get-dyn-td-results-iter (cdr items) (- capacity item-weight) memory solution))
+      )))
+
+(defun approximate-knapsack-weights (knap ratio) 
+  (mapcar #'(lambda (x) (setf (car x) (ash (car x) (- ratio)))) (knapsack-items knap)) 
+  (setf (knapsack-capacity knap) (ash (knapsack-capacity knap) (- ratio)))
+  knap)
