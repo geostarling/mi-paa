@@ -26,7 +26,7 @@
 				:id (parse-integer (car inst-list))
 				:n (parse-integer (cadr inst-list))
 				:capacity (parse-integer (caddr inst-list))
-				:items (proc-items (cdddr inst-list) nil))
+				:items (reverse (proc-items (cdddr inst-list) nil)))
 			       insts)))
 	insts)))
 
@@ -43,22 +43,18 @@
 	(close in)))))
 
 (defun load-all ()
-  (load-knapsack "data/knap_20.inst.dat"))
+  (load-knapsack "data/knap_40.inst.dat"))
 
 (defun load-first () 
   (let ((knap (car (load-all))))
-    (setf (knapsack-items knap) (reverse (knapsack-items knap)))
+    (setf (knapsack-items knap) (knapsack-items knap))
     knap))
 
 (defun get-price (config knap)
-  (get-price-iter config (knapsack-items knap) 0))
+  (apply #'+ (mapcar #'(lambda (x y) (* x (cdr y))) config (knapsack-items knap))))
 
-(defun get-price-iter (config knap-items price-sum)
-  (if (car config)
-      (if (eql (car config) 1) 
-	  (get-price-iter (cdr config) (cdr knap-items) (+ price-sum (cdar knap-items)))
-	  (get-price-iter (cdr config) (cdr knap-items) price-sum))
-      price-sum))
+(defun get-weight (config knap)
+  (apply #'+ (mapcar #'(lambda (x y) (* x (car y))) config (knapsack-items knap))))
 
 (defun is-overweight? (config knap)
   (is-overweight?-iter config (knapsack-items knap) (knapsack-capacity knap) 0))
@@ -84,7 +80,7 @@
   (let ((stack nil))
     (push '(0) stack)
     (push '(1) stack)
-    (bb-algorithm-optimize knapsack stack (make-result :id (knapsack-id knapsack) :solution NIL :step-counter 0))
+    (bb-algorithm-optimize knapsack stack (make-result :id (knapsack-id knapsack) :solution NIL :price 0 :step-counter 0))
     ))
   
 
@@ -95,7 +91,8 @@
     (incf (result-step-counter res))
     (if (not stack-top) 
 	(progn 
-	  (setf (result-solution res) (reverse (result-solution res)))
+	  (setf (result-solution res) (result-solution res))
+	  (setf (result-price res) (get-price (result-solution res) knap))
 	  res)
 	(let ((child-states (get-child-states 
 			     stack-top 
@@ -187,11 +184,13 @@
 (defun dyn-td-algorithm (knap)
   (let ((memory (make-hash-table :test 'equal))
 	(result (make-result :id (knapsack-id knap) :step-counter 0)))
+
     (dyn-td-algorithm-iter (knapsack-items knap) (knapsack-capacity knap) memory result)
-    (setf (result-solution  result) (get-dyn-td-results knap memory))
-    (print memory)
-    result
-    ))
+;    (print price)
+    (setf (result-solution result) (get-dyn-td-results knap memory))
+    (setf (result-price result) (get-price (result-solution result) knap))
+ ;   (print memory)
+    result))
 
 (defun dyn-td-algorithm-iter (items capacity memory result)
   (let* (
@@ -213,17 +212,17 @@
 		    (+ item-price (dyn-td-algorithm-iter (cdr items) (- capacity item-weight) memory result))
 		    (dyn-td-algorithm-iter (cdr items) capacity memory result)))))
     (setf (gethash (list item capacity) memory) price)
-    (setf (result-step-counter result) (1+ (result-step-counter result)))
+    (incf (result-step-counter result))
     price))
 
 
 
 (defun get-dyn-td-results (knapsack memory)
-  (get-dyn-td-results-iter 
+  (reverse (get-dyn-td-results-iter 
    (knapsack-items knapsack) 
-   (knapsack-capacity knapsack ) 
+   (knapsack-capacity knapsack) 
    memory 
-   nil) 
+   nil))
   )
 
 (defun get-dyn-td-results-iter (items capacity memory solution)
@@ -242,6 +241,11 @@
       )))
 
 (defun approximate-knapsack-weights (knap ratio) 
-  (mapcar #'(lambda (x) (setf (car x) (ash (car x) (- ratio)))) (knapsack-items knap)) 
+  (mapcar #'(lambda (x) 
+	      (setf (car x) 
+		    (if (> (ash (car x) (- ratio)) 0) 
+			(ash (car x) (- ratio)) 
+			1))) 
+	  (knapsack-items knap)) 
   (setf (knapsack-capacity knap) (ash (knapsack-capacity knap) (- ratio)))
   knap)
