@@ -1,4 +1,4 @@
-(declaim (optimize (speed 0) (safety 3) (debug 3)))
+(declaim (optimize (speed 3) (safety 3) (debug 0)))
 
 (defun string-split (string)
   (loop :for start := 0 :then (1+ finish)
@@ -8,7 +8,7 @@
 
 
 (defstruct knapsack id n capacity items)
-(defstruct result id solution price step-counter start-time end-time)  
+(defstruct result id solution price step-counter (start-time 0) (end-time 0))  
 
     
 (defun proc-items (items-str-list items) 
@@ -43,7 +43,7 @@
 	(close in)))))
 
 (defun load-all ()
-  (load-knapsack "data/knap_40.inst.dat"))
+  (load-knapsack "data/knap_10.inst.dat"))
 
 (defun load-first () 
   (let ((knap (car (load-all))))
@@ -249,3 +249,162 @@
 	  (knapsack-items knap)) 
   (setf (knapsack-capacity knap) (ash (knapsack-capacity knap) (- ratio)))
   knap)
+
+
+;;================================================================================
+
+(defstruct dataset n path)
+
+(defun get-datasets ()
+  (reverse 
+   (list
+    (make-dataset :n 40 :path "data/knap_40.inst.dat")
+    (make-dataset :n 37 :path "data/knap_37.inst.dat")
+    (make-dataset :n 35 :path "data/knap_35.inst.dat")
+    (make-dataset :n 32 :path "data/knap_32.inst.dat")
+    (make-dataset :n 30 :path "data/knap_30.inst.dat")
+    (make-dataset :n 27 :path "data/knap_27.inst.dat")
+    (make-dataset :n 25 :path "data/knap_25.inst.dat")
+    (make-dataset :n 22 :path "data/knap_22.inst.dat")
+    (make-dataset :n 20 :path "data/knap_20.inst.dat")
+    (make-dataset :n 15 :path "data/knap_15.inst.dat")
+    (make-dataset :n 10 :path "data/knap_10.inst.dat")
+    (make-dataset :n 4 :path "data/knap_4.inst.dat"))))
+
+(defun run-experiments ()
+  (let ((datasets (get-datasets))
+	(res nil))
+    (format t "n;B&Btime;DynTime;FPTAS1Time;FPTAS2Time;FPTAS3Time;FPTAS4Time;B&Bsteps;Dynsteps;FPTAS1steps;FPTAS2steps;FPTAS3steps;FPTAS4steps;fptas1Err;fptas2err;fptas3err;fptas4err;~%")
+
+   (dolist (ds datasets)
+      (setf res (experiment ds))
+      (format t "~D;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~%" 
+	      (dataset-n ds)
+	      (method-result-duration (exp-result-bb res))
+	      (method-result-duration (exp-result-dyn res))
+	      (method-result-duration (exp-result-fptas1 res))
+	      (method-result-duration (exp-result-fptas2 res))
+	      (method-result-duration (exp-result-fptas3 res))
+	      (method-result-duration (exp-result-fptas4 res))
+	      (method-result-step-counter (exp-result-bb res))
+	      (method-result-step-counter (exp-result-dyn res))
+	      (method-result-step-counter (exp-result-fptas1 res))
+	      (method-result-step-counter (exp-result-fptas2 res))
+	      (method-result-step-counter (exp-result-fptas3 res))
+	      (method-result-step-counter (exp-result-fptas4 res))
+	      (method-result-rel-error (exp-result-fptas1 res))
+	      (method-result-rel-error (exp-result-fptas2 res))
+	      (method-result-rel-error (exp-result-fptas3 res))
+	      (method-result-rel-error (exp-result-fptas4 res)))
+)))
+
+(defstruct method-result (step-counter 0) (duration 0) (rel-error 0))
+
+(defstruct exp-result
+  (bb (make-method-result))
+  (dyn (make-method-result))
+  (fptas1 (make-method-result))
+  (fptas2 (make-method-result))
+  (fptas3 (make-method-result))
+  (fptas4 (make-method-result)))
+
+
+(defun proc-result (result result-agg)
+  (incf (method-result-step-counter result-agg) (result-step-counter result))
+  (incf (method-result-duration result-agg) (- (result-end-time result) (result-start-time result)))
+  (incf (method-result-rel-error result-agg) (result-price result)))
+
+(defun skipb (knap)
+  (let 
+      ((l (knapsack-items knap))
+       (i (knapsack-id knap)))
+    (or  (= 
+	  (caar l) 
+	  (cdar l) 
+	  (caadr l) 
+	  (cdadr l))
+	 (= i 9557))))
+  
+;(defstruct result id solution price step-counter start-time end-time)  
+(defun experiment (dataset)
+  (let
+      ((instances (load-knapsack (dataset-path dataset)))
+       (exp-res (make-exp-result))
+       (tmp-res nil)
+       (inst-count 0)
+       (before-time 0)
+       (after-time 0))
+    (dolist (knap instances)
+;     (print "processing instance")
+ ;     (print knap)
+      (when (not (skipb knap))
+	(incf inst-count)
+;	(print "not skipped")
+      ;------------------------------------------------------
+      (setf before-time (get-internal-real-time))
+      (setf tmp-res (bb-algorithm knap))
+      (setf after-time (get-internal-real-time))
+      (setf (result-start-time tmp-res) before-time)
+      (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-bb exp-res))
+      ;------------------------------------------------------
+      (setf before-time (get-internal-real-time))
+      (setf tmp-res (dyn-td-algorithm knap))
+      (setf after-time (get-internal-real-time))
+      (setf (result-start-time tmp-res) before-time)
+      (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-dyn exp-res))
+      ;------------------------------------------------------
+      (setf before-time (get-internal-real-time))
+      (setf tmp-res (dyn-td-algorithm (approximate-knapsack-weights knap 1)))
+      (setf after-time (get-internal-real-time))
+      (setf (result-start-time tmp-res) before-time)
+      (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-fptas1 exp-res))
+      ;------------------------------------------------------
+      (setf before-time (get-internal-real-time))
+      (setf tmp-res (dyn-td-algorithm (approximate-knapsack-weights knap 2)))
+      (setf after-time (get-internal-real-time))
+      (setf (result-start-time tmp-res) before-time)
+      (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-fptas2 exp-res))
+      ;------------------------------------------------------
+      (setf before-time (get-internal-real-time))
+      (setf tmp-res (dyn-td-algorithm (approximate-knapsack-weights knap 3)))
+      (setf after-time (get-internal-real-time))
+      (setf (result-start-time tmp-res) before-time)
+      (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-fptas3 exp-res))
+      ;------------------------------------------------------
+      (setf before-time (get-internal-real-time))
+      (setf tmp-res (dyn-td-algorithm (approximate-knapsack-weights knap 4)))
+      (setf after-time (get-internal-real-time))
+      (setf (result-start-time tmp-res) before-time)
+      (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-fptas4 exp-res))))
+
+    ;; prumerovani
+    (let ((solution-price (method-result-rel-error (exp-result-bb exp-res))))
+      (post-proc-results inst-count (exp-result-bb exp-res) solution-price)
+      (post-proc-results inst-count (exp-result-dyn exp-res) solution-price)
+      (post-proc-results inst-count (exp-result-fptas1 exp-res) solution-price)
+      (post-proc-results inst-count (exp-result-fptas2 exp-res) solution-price)
+      (post-proc-results inst-count (exp-result-fptas3 exp-res) solution-price)
+      (post-proc-results inst-count (exp-result-fptas4 exp-res) solution-price))
+    exp-res))
+
+(defun post-proc-results (inst-count result-agg solution-price)
+  
+  (setf (method-result-step-counter result-agg) 
+	(/ (method-result-step-counter result-agg) inst-count))
+
+  (setf (method-result-duration result-agg) 
+	(/ (method-result-duration result-agg) inst-count))
+
+  (setf (method-result-rel-error result-agg)
+	(/ 
+	 (- solution-price (method-result-rel-error result-agg)) 
+	 solution-price)))
+
+
+
