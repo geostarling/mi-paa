@@ -1,4 +1,4 @@
-;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*- File: search/test.lisp
+;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*- File: search/test-optimization.lisp
 
 ;;;; Test Cases for Search
 
