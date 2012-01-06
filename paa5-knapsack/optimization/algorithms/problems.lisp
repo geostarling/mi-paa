@@ -47,8 +47,8 @@
   (repr (required))         ; internal representation of state
   )
 
-(defstruct (state-bit-vector (:include state (repr nil :type bit-vector)))
-  )
+;(defstruct (state-bit-vector (:include state (repr nil :type bit-vector)))
+;  )
 
 
 
