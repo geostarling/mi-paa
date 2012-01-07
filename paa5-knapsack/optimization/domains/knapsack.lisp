@@ -13,8 +13,9 @@
   "Constructor for Knapsack problem. Initial state is empty knapack with every item excluded."
   (create-knapsack-problem 
    :initial-state (make-sequence 'bit-vector (length items) :initial-element 0) 
-   :dimension (length items)
+   :id 0     ; PAA
    :items items
+   :dimension (length items)
    :capacity capacity)
   )
 
@@ -30,9 +31,8 @@
   "Return a list of (action . state) pairs.  Actions are just the name of
   the city to go to.  You can only go to a city you haven't visited yet,
   unless you've visited them all, in which case you can only go back home."
-  (let ((repr-vec (state-bit-vector-repr state))
-	(masks nil))
-    (dotimes (mask-bit-idx (1- (length repr-vec))) 
+  (let ((masks nil))
+    (dotimes (mask-bit-idx (1- (length state))) 
       (let ((mask-vector (make-sequence 'bit-vector (length state) :initial-element 0)))
 	(setf (bit mask-vector mask-bit-idx) 1)
 	(push mask-vector masks)))
@@ -40,7 +40,7 @@
 	 #'(lambda (item mask) (cons item (bit-xor state mask)))
 	 (knapsack-problem-items problem) masks)))
 
-(defmethod make-random-state ((problem knapsack-problem))
+(defmethod init-random-state ((problem knapsack-problem))
   (make-random-bit-vector (knapsack-problem-dimension problem)))
 
 ;(defun get-weight (config knap)

@@ -23,17 +23,17 @@
   "Some useful comment."
 
   (let* (
-	 (pop-init-fn (config-population-init-fn conifg))
-	 (pop-size (config-population-size config))
-	 (stop-crit-fn (config-stopping-criterion-fn config))
-	 (scale-fn (config-scaling-scheme-fn config))
-	 (population  (make-population pop-init-fn pop-size)))
+	 (pop-init-fn (ga-config-population-init-fn config))
+	 (pop-size (ga-config-population-size config))
+	 (stop-crit-fn (ga-config-stopping-criterion-fn config))
+	 (scale-fn (ga-config-scaling-scheme-fn config))
+	 (population  (make-population pop-init-fn pop-size problem)))
 
     (loop until (reached-stopping-criterion? stop-crit-fn population) 
        do (print "Loop start")
        do (setf (population-pool population) (repopulate population (breed population config)))
        do (incf (population-age population))
-       do (rescale scaling-scheme-fn population)
+       do (rescale scale-fn population)
        do (print "update result set"))
     nil))
 
@@ -42,13 +42,13 @@
   "Hardcoded breed method. Should be configurable in the future"
   (let (
 	(mutation-fn (ga-config-mutation-fn config))
-	(crossover-fn (ga-config-crossover-fn config)))
+	(crossover-fn (ga-config-crossover-fn config))
 	(selection-fn (ga-config-selection-fn config)))
-  (apply #'concatenate 'list 
-	 (loop for iter from 1 to (/ (population-size population) 2)
-	    collect (mutate mutation-fn (cross crossover-fn 
-				   (select selection-fn population) 
-				   (select selection-fn population))))))
+    (apply #'concatenate 'list 
+	   (loop for iter from 1 to (/ (population-size population) 2)
+	      collect (mutate mutation-fn (cross crossover-fn 
+						 (select selection-fn population) 
+						 (select selection-fn population)))))))
 
 
 (defun rescale (population scaling-scheme-fn)
@@ -76,7 +76,7 @@
 
 (defun mutate (mutation-fn genomes)
   "maps mutation function on given chromosome list."
-  (map mutation-fn genomes)
+  (map 'list mutation-fn genomes)
 )
 
 
@@ -88,7 +88,9 @@
 
 ;;;; Rescale schemes
 (defun make-null-scaling-scheme ()
-  (lambda (population genome-pool) (nil)))
+  (lambda (population genome-pool) 
+    (print population)
+    (print genome-pool)))
 
 
 
@@ -103,7 +105,7 @@
 
 ;; Implementation
 (defun roulette-selection (population)
-  (let (
+  (let* (
 	(fitness-sum (apply #'+ (map 'list #'genome-fitness (population-pool population))))
 	(random-roll (random fitness-sum)))
 
@@ -112,11 +114,11 @@
 	  (first genomes-list)
 	  (inner-loop (rest genomes-list) 
 		      (- roll-remainder (genome-fitness (first genomes-list))))))
-    (inner-loop (population-pool random-roll))))
+    (inner-loop (population-pool population) random-roll)))
 
 ;;;; Mutations; uses side effects!!
 
-(defmethod make-bit-flip-mutation ((mutation-rate short-float))
+(defmethod make-bit-flip-mutation ((mutation-rate float))
   "Constructor method that crates lambda holdin closure which immediately call appropriate method with closured value. Oh god my english really sucks!"
   (if (or (< mutation-rate 0.0) (> mutation-rate 1.0))
       (error "Mutation rate must be from interval [0.0 - 1.0]")
@@ -124,7 +126,7 @@
 
 
 
-(defmethod bit-flip-mutation ((mutation-rate short-float) (genome genome-bit-vector))
+(defmethod bit-flip-mutation ((mutation-rate float) (genome genome-bit-vector))
   "This method flips one bit if blah blah TBD doc here"
   (if (< mutation-rate (random 1.0))
       genome     ; mutation-rate is lower than random roll so we don;t mutate anything
@@ -147,11 +149,11 @@
 		   1
 		   :end (random (length (genome-state x-genome)))))) ; random crosspoint
 
-    (list (make-genome (bit-or                               ;new x-genome
+    (list (make-genome (bit-ior                               ;new x-genome
 			(bit-and (genome-state y-genome) mask-vec)
 			(bit-and (genome-state x-genome) (bit-not mask-vec)) 
 			t))
-	  (make-genome (bit-or                               ;new y-genome
+	  (make-genome (bit-ior                               ;new y-genome
 			(bit-and (genome-state x-genome) mask-vec)
 			(bit-and (genome-state y-genome) (bit-not mask-vec)) 
 			t)))))
@@ -175,20 +177,19 @@
 
 
 (defun make-population (init-fn size problem)
-  (let (
-	(popul (create-population
-	      :pool (make-array size :element-type genome) 
-	      :number 0
-	      :size 0
-	      )))
-    (funcall init-fn popul size problem)))
+  (create-population
+   :pool (funcall init-fn size problem)
+   :age 0
+   :size 0
+   ))
+  
 
 
 ;;;; Initializers
-(defun init-random-population (population size problem)
+(defun init-random-population-pool (size problem)
   ;; populate with random states
-  (dotimes (idx population-size)
-    (setf (aref population-pool idx) (make-random-genome problem))))
+  (loop for iter from 1 to size
+     collect (make-random-genome problem)))
 
 
 ;;;; Genome
@@ -214,7 +215,7 @@
 ;;;; Genome Initializers
 
 (defmethod make-random-genome ((problem problem))
-  (make-genome (make-random-state problem)))
+  (make-genome (init-random-state problem)))
 
 
 ;;(defmethod make-random-genome-solution ((problem problem)) 

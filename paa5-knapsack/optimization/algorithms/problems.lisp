@@ -65,7 +65,7 @@
       (for each (action . state) in (successors problem (node-state node)) do
 	     (push
 	      (make-node 
-	       :parent node :action action :state state
+	       :parents (list node) :action action :state state
 	       :depth (1+ (node-depth node)) 
 	       :cost (node-cost node))
 	      nodes))
@@ -82,14 +82,14 @@
 (defun solution-actions (node &optional (actions-so-far nil))
   "Return a list of actions that will lead to the node's state."
   (cond ((null node) actions-so-far)
-	((null (node-parent node)) actions-so-far)
-	(t (solution-actions (node-parent node)
+	((null (node-parents node)) actions-so-far)
+	(t (solution-actions (node-parents node)
 			     (cons (node-action node) actions-so-far)))))
 
 (defun solution-nodes (node &optional (nodes-so-far nil))
   "Return a list of the nodes along the path to the solution."
   (cond ((null node) nodes-so-far)
-	(t (solution-nodes (node-parent node)
+	(t (solution-nodes (node-parents node)
 			   (cons node nodes-so-far)))))
 
 (defun solve (problem &optional algorithm)
