@@ -5,11 +5,12 @@
 
 
 (defstruct ga-config 
-  (population-size 100 :type integer)
+  (population-size 10 :type integer)
 
   (population-init-fn #'init-random-population :type function)
-  (stopping-criterion-fn (make-generation-age-condition-fn 1000) :type function)
-  (scaling-scheme-fn (make-null-scaling-scheme) :type function)
+  (stopping-criterion-fn (make-generation-age-condition-fn 10) :type function)
+  (scaling-scheme-fn (make-identity-scaling-scheme) :type function)
+  (repopulation-fn (make-simple-repopulation) :type function)
 
   (selection-fn (make-roulette-selection) :type function)
   (crossover-fn (make-one-point-crossover) :type function)
@@ -27,37 +28,45 @@
 	 (pop-size (ga-config-population-size config))
 	 (stop-crit-fn (ga-config-stopping-criterion-fn config))
 	 (scale-fn (ga-config-scaling-scheme-fn config))
-	 (population  (make-population pop-init-fn pop-size problem)))
+	 (repopulation-fn (ga-config-repopulation-fn config))
+
+	 (selection-fn (ga-config-selection-fn config))
+	 (crossover-fn (ga-config-crossover-fn config))
+	 (mutation-fn (ga-config-mutation-fn config))
+
+	 (population (make-population pop-init-fn pop-size problem)))
 
     (loop until (reached-stopping-criterion? stop-crit-fn population) 
        do (print "Loop start")
-       do (setf (population-pool population) (repopulate population (breed population config)))
+       do (rescale scale-fn (population-pool population))
+       do (print-genome-pool (population-pool population))
+       do (setf (population-pool population)
+		(repopulate repopulation-fn 
+			    population 
+			    (breed population selection-fn crossover-fn mutation-fn)
+			    problem))
        do (incf (population-age population))
-       do (rescale scale-fn population)
        do (print "update result set"))
     nil))
 
 
-(defun breed (population config)
+(defun breed (population selection-fn crossover-fn mutation-fn)
   "Hardcoded breed method. Should be configurable in the future"
-  (let (
-	(mutation-fn (ga-config-mutation-fn config))
-	(crossover-fn (ga-config-crossover-fn config))
-	(selection-fn (ga-config-selection-fn config)))
-    (apply #'concatenate 'list 
-	   (loop for iter from 1 to (/ (population-size population) 2)
-	      collect (mutate mutation-fn (cross crossover-fn 
-						 (select selection-fn population) 
-						 (select selection-fn population)))))))
+  (apply #'concatenate 'list 
+	 (loop for iter from 1 to (round (/ (population-size population) 2))
+	    collect (mutate mutation-fn (cross crossover-fn 
+					       (select selection-fn population) 
+					       (select selection-fn population))))))
 
 
-(defun rescale (population scaling-scheme-fn)
-  "Updates fitness for every chromosome in population."
-  (funcall scaling-scheme-fn population))
+(defun rescale (scaling-scheme-fn genome-pool)
+  "Updates fitness for every genome in population."
+  (funcall scaling-scheme-fn genome-pool))
 
-(defun repopulate (population genome-pool)
-  "Hardcoded repopulation method. Repop method shoud be selectable and configurable in the future."
-  genome-pool
+(defun repopulate (repopulate-fn population genome-pool problem)
+  "This function doesnt changes given population structure. Just returns list of new generation genomes that must be set to population structure."
+  (recalculate-fitness genome-pool problem)
+  (funcall repopulate-fn population genome-pool)
 )
 
 ;;;; Aux
@@ -79,6 +88,14 @@
   (map 'list mutation-fn genomes)
 )
 
+(defmethod recalculate-fitness ((genome-pool list) (problem problem))
+  (map 'list 
+       #'(lambda (gen) (recalculate-fitness gen problem))
+       genome-pool))
+
+(defmethod recalculate-fitness ((gen genome) (problem problem))
+  (setf (genome-fitness gen) (objective-fn problem (genome-state gen)))
+  gen)
 
 ;;;; Stop conditions
 
@@ -87,13 +104,39 @@
 
 
 ;;;; Rescale schemes
-(defun make-null-scaling-scheme ()
-  (lambda (population genome-pool) 
-    (print population)
-    (print genome-pool)))
+(defun make-identity-scaling-scheme ()
+  "Takes result of problem's objective function as genome's fitness. I.E. does no rescaling."
+  #'identity-scaling-scheme)
+
+(defmethod identity-scaling-scheme ((genome-pool list))
+  (dolist (gen genome-pool) 
+    (setf (genome-scaled-fitness gen) (genome-fitness gen)))
+  genome-pool)
 
 
+;;;; Repopulations
 
+(defun make-simple-repopulation (&optional (elite-count 1))
+; TBD check elite-count boundary
+  (lambda (population genome-pool)
+    (let
+	((old-pool (sort 
+		    (copy-list (population-pool population))
+		    #'<
+		    :key #'genome-fitness))
+	 (new-pool (sort genome-pool #'< :key #'genome-fitness))
+	 (result-pool nil))
+      (dotimes (idx elite-count)  ;; add elite into result
+	(push (first old-pool) result-pool)
+	(setf old-pool (rest old-pool)))
+      (loop for gen in new-pool
+	 until (= (length result-pool) (length genome-pool))
+	 do (push gen result-pool))
+      result-pool)))
+
+(defun make-steady-state-repopulation ()
+  nil 
+)
 ;;;; Selections
 
 ;; Roulette selection
@@ -105,15 +148,15 @@
 
 ;; Implementation
 (defun roulette-selection (population)
-  (let* (
-	(fitness-sum (apply #'+ (map 'list #'genome-fitness (population-pool population))))
+  ;; tady je problem v pripade kdy maji vschny genomy fitness 0 tak random vrati chybu
+  (let* ((fitness-sum (apply #'+ (map 'list #'genome-scaled-fitness (population-pool population))))
 	(random-roll (random fitness-sum)))
 
     (defun inner-loop (genomes-list roll-remainder)
-      (if (< roll-remainder (genome-fitness (first genomes-list)))
+      (if (< roll-remainder (genome-scaled-fitness (first genomes-list)))
 	  (first genomes-list)
 	  (inner-loop (rest genomes-list) 
-		      (- roll-remainder (genome-fitness (first genomes-list))))))
+		      (- roll-remainder (genome-scaled-fitness (first genomes-list))))))
     (inner-loop (population-pool population) random-roll)))
 
 ;;;; Mutations; uses side effects!!
@@ -130,8 +173,18 @@
   "This method flips one bit if blah blah TBD doc here"
   (if (< mutation-rate (random 1.0))
       genome     ; mutation-rate is lower than random roll so we don;t mutate anything
-      (flip-bit (genome-state genome) (random (length (genome-state genome))))))
+;tady chyba
+      (mutate-bit genome (random (length (genome-state genome))))))
 
+
+;;;; Auxiliary functions
+(defmethod mutate-bit ((genome genome-bit-vector) index)
+  "EVIL function! uses side effects!"
+  (setf (bit (genome-state genome) index) 
+	(if (= (bit (genome-state genome)  index) 0)
+	    1
+	    0))
+  genome)
 
 
 ;;;; Crossovers; doesnt use side effects
@@ -146,8 +199,7 @@
 		   (make-sequence 'bit-vector 
 				  (length (genome-state x-genome))
 				  :initial-element 0)
-		   1
-		   :end (random (length (genome-state x-genome)))))) ; random crosspoint
+		   1 :end (random (length (genome-state x-genome)))))) ; random crosspoint
 
     (list (make-genome (bit-ior                               ;new x-genome
 			(bit-and (genome-state y-genome) mask-vec)
@@ -159,13 +211,10 @@
 			t)))))
 
 
-;;;; Auxiliary functions
-(defun flip-bit (vector index)
-  "EVIL function! uses side effects!"
-  (setf (bit vector index) 
-	(if (= (bit vector index) 0)
-	    1
-	    0)))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;;;; Populations
@@ -178,15 +227,15 @@
 
 (defun make-population (init-fn size problem)
   (create-population
-   :pool (funcall init-fn size problem)
+   :pool (recalculate-fitness (funcall init-fn size problem) problem)
    :age 0
-   :size 0
+   :size size
    ))
   
 
 
 ;;;; Initializers
-(defun init-random-population-pool (size problem)
+(defun init-random-population (size problem)
   ;; populate with random states
   (loop for iter from 1 to size
      collect (make-random-genome problem)))
@@ -196,6 +245,7 @@
 
 (defstructure (genome (:include node)
 		      (:constructor create-genome))
+    (scaled-fitness 0)
     (age 0)
 )
 
@@ -222,3 +272,14 @@
 ;;  (make-genome (make-random-state problem)))
 
 
+;;;; Printers
+;(defmethod print-structure ((node node) stream)
+;  (format stream "#<NODE f(~D) = g(~D) + h(~D) state:~A>" (node-f-cost node)
+;          (node-g-cost node) (node-h-cost node) (node-state node)))
+
+(defmethod print-genome-pool (pool)
+  (dolist (gen pool)
+    (print-structure gen t)))
+
+(defmethod print-structure ((gen genome) stream)
+  (format stream "#<GENOME fitness:~D  state:~A>~%" (genome-fitness gen) (genome-state gen)))

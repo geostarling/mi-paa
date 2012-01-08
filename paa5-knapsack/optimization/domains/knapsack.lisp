@@ -4,16 +4,17 @@
 
 (defstructure (knapsack-problem (:include problem) 
 			(:constructor create-knapsack-problem))
+  (id 0) ;PAA speciality
   (items nil)
   (capacity 0)
   )
 
-(defun make-knapsack-problem (&key (items nil)
+(defun make-knapsack-problem (&key (id 0) (items nil)
 			      (capacity 0))
   "Constructor for Knapsack problem. Initial state is empty knapack with every item excluded."
   (create-knapsack-problem 
    :initial-state (make-sequence 'bit-vector (length items) :initial-element 0) 
-   :id 0     ; PAA
+   :id id     ; PAA
    :items items
    :dimension (length items)
    :capacity capacity)
@@ -39,6 +40,7 @@
     (map 'list 
 	 #'(lambda (item mask) (cons item (bit-xor state mask)))
 	 (knapsack-problem-items problem) masks)))
+
 
 (defmethod init-random-state ((problem knapsack-problem))
   (make-random-bit-vector (knapsack-problem-dimension problem)))

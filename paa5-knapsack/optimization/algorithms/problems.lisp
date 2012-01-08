@@ -34,7 +34,7 @@
   (state (required))        ; a state in the domain
   (parents nil :type list)  ; list containing parent nodes of this node
   (action nil)              ; the domain action leading to state
-  (fitness 0)
+  (fitness 1)
 ;  (successors nil)          ; list of sucessor nodes
 ;  (unexpanded nil)          ; successors not yet examined (SMA* only)
   (depth 0)                 ; depth of node in tree (root = 0)
