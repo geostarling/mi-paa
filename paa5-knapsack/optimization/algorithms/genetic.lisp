@@ -18,6 +18,8 @@
   )
 
 
+
+
 (defun genetic-algorithm (problem 
 			  &optional 
 			  (config (make-ga-config)))
@@ -49,6 +51,41 @@
        do (print "update result set"))
     nil))
 
+
+;;;; Genome
+
+(defstructure (genome (:include node)
+		      (:constructor create-genome))
+    (scaled-fitness 0)
+    (age 0)
+)
+
+(defstructure (genome-bit-vector (:include genome (state nil :type bit-vector))
+				 (:constructor create-genome-bit-vector))
+)
+
+;; Genome Constructors 
+
+(defmethod make-genome ((state bit-vector))
+  (create-genome-bit-vector :state state))
+
+;;(defmethod make-genome (state state-tree)
+;;  (create-genome-tree :state state))
+
+
+;;;; Genome Initializers
+
+(defmethod make-random-genome ((problem problem))
+  (make-genome (init-random-state problem)))
+
+
+;;(defmethod make-random-genome-solution ((problem problem)) 
+;;  (make-genome (make-random-state problem)))
+
+
+
+
+;;;; Operations
 
 (defun breed (population selection-fn crossover-fn mutation-fn)
   "Hardcoded breed method. Should be configurable in the future"
@@ -137,6 +174,7 @@
 (defun make-steady-state-repopulation ()
   nil 
 )
+
 ;;;; Selections
 
 ;; Roulette selection
@@ -187,7 +225,7 @@
   genome)
 
 
-;;;; Crossovers; doesnt use side effects
+;;;; Crossovers; dont use side effects
 
 (defun make-one-point-crossover ()
   #'one-point-crossover)
@@ -241,35 +279,9 @@
      collect (make-random-genome problem)))
 
 
-;;;; Genome
-
-(defstructure (genome (:include node)
-		      (:constructor create-genome))
-    (scaled-fitness 0)
-    (age 0)
-)
-
-(defstructure (genome-bit-vector (:include genome (state nil :type bit-vector))
-				 (:constructor create-genome-bit-vector))
-)
-
-;; Genome Constructors 
-
-(defmethod make-genome ((state bit-vector))
-  (create-genome-bit-vector :state state))
-
-;;(defmethod make-genome (state state-tree)
-;;  (create-genome-tree :state state))
 
 
-;;;; Genome Initializers
 
-(defmethod make-random-genome ((problem problem))
-  (make-genome (init-random-state problem)))
-
-
-;;(defmethod make-random-genome-solution ((problem problem)) 
-;;  (make-genome (make-random-state problem)))
 
 
 ;;;; Printers

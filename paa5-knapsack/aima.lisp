@@ -201,6 +201,13 @@
     ("algorithms" / "chart-parse")
     ("domains" / "grammars" )))
 
+(def-aima-system optimization (utilities)
+  ""
+  ("optimization" / "test-optimization"
+    ("algorithms" / "problems" "genetic")
+    ("domains" / "knapsack")
+    ("loaders" / "knapsack-loader")))
+
 (def-aima-system all ()
   "All systems except the utilities system, which is always already loaded"
   agents search logic planning uncertainty learning language)
