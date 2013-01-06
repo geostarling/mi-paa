@@ -216,6 +216,64 @@
     price))
 
 
+(defun price (item)
+  (cdr item))
+
+(defun weight (item)
+  (car item))
+
+; ======================== MEMORY =========================
+
+(defun make-memory (i-dim c-dim)
+  (let ((mem-arr (make-array `(,i-dim ,c-dim) :initial-element 'infinity)))
+  (defun mload (i c)
+    (aref mem-arr i c))
+  (defun mstore (i c val)
+    (setf (aref mem-arr i c) val))
+  (defun dispatch (op &rest args) 
+    (cond
+      ((eql op 'mload) (apply #'mload args))
+      ((eql op 'mstore) (apply #'mstore args))))
+  (loop for i from 0 below i-dim do 
+       (setf (aref mem-arr i 0) 0))
+  #'dispatch))
+
+(defun mload (mem &rest args)
+  (apply mem (cons 'mload args)))
+
+(defun mstore (mem &rest args)
+  (apply mem (cons 'mstore args)))
+
+(defun sum (list)
+  (apply #'+ list))
+
+(defun dyn-price-alg (knap)
+  (let ((i-dim (knapsack-items knap))
+	(c-dim (sum (mapcar #'price (knapsack-items knap)))))
+    (loop
+       for i from 0 below i-dim
+       do
+	 (loop 
+	    for c from 0 below c-dim
+	    do
+	      (print i)
+	      (print c)))))
+
+
+
+
+
+
+(defun dyn-price-alg-iter (i ))
+
+
+
+
+
+
+
+
+
 
 (defun get-dyn-td-results (knapsack memory)
   (reverse (get-dyn-td-results-iter 
