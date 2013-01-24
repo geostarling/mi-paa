@@ -1,4 +1,4 @@
-(declaim (optimize (speed 3) (safety 3) (debug 0)))
+(declaim (optimize (speed 2) (safety 3) (debug 3)))
 
 (defun string-split (string)
   (loop :for start := 0 :then (1+ finish)
@@ -225,54 +225,101 @@
 ; ======================== MEMORY =========================
 
 (defun make-memory (i-dim c-dim)
-  (let ((mem-arr (make-array `(,i-dim ,c-dim) :initial-element 'infinity)))
-  (defun mload (i c)
-    (aref mem-arr i c))
-  (defun mstore (i c val)
-    (setf (aref mem-arr i c) val))
-  (defun dispatch (op &rest args) 
-    (cond
-      ((eql op 'mload) (apply #'mload args))
-      ((eql op 'mstore) (apply #'mstore args))))
-  (loop for i from 0 below i-dim do 
-       (setf (aref mem-arr i 0) 0))
-  #'dispatch))
+  (let* ((mem-arr (make-array `(,i-dim ,c-dim) :initial-element 'infinity))
+	(dispatch (lambda (op &rest args) 
+		    (cond
+		      ((eql op 'mload) (aref mem-arr (car args) (cadr args)))
+		      ((eql op 'mstore) (setf (aref mem-arr (car args) (cadr args)) (caddr args)))
+		      ((eql op 'get-i-dim) i-dim)
+		      ((eql op 'get-c-dim) c-dim )))))
+    (loop for i from 0 below i-dim do 
+	 (setf (aref mem-arr i 0) 0))
+    dispatch))
 
-(defun mload (mem &rest args)
-  (apply mem (cons 'mload args)))
+(defun mload (mem i c)
+  (apply mem (list 'mload i c)))
 
-(defun mstore (mem &rest args)
-  (apply mem (cons 'mstore args)))
+(defun mstore (mem i c val)
+  (apply mem (list 'mstore i c val)))
+
+(defun get-i-dim (mem)
+  (apply mem (cons 'get-i-dim nil)))
+
+(defun get-c-dim (mem)
+  (apply mem (cons 'get-c-dim nil)))
+
 
 (defun sum (list)
   (apply #'+ list))
 
+(defun minimum (a b)
+  (if (lesser a b) a b))
+
+
+(defun lesser (a b)
+  (cond
+    ((eql a 'infinity) nil)
+    ((eql b 'infinity) t)
+    (t (< a b))))
+
 (defun dyn-price-alg (knap)
-  (let ((i-dim (knapsack-items knap))
-	(c-dim (sum (mapcar #'price (knapsack-items knap)))))
+  (let* ((items (knapsack-items knap))
+	 (i-dim (length items))
+	 (c-dim (sum (mapcar #'price (knapsack-items knap))))
+	 (mem (make-memory i-dim c-dim)))
     (loop
        for i from 0 below i-dim
        do
 	 (loop 
 	    for c from 0 below c-dim
 	    do
-	      (print i)
-	      (print c)))))
+	      (let ((item (nth (1+ i) items)))
+		(print "nil")
+		(mstore mem 
+			(1+ i) 
+			c 
+			(minimum (mload mem i c)
+				 (+ (mload mem i (- c (price item))) (weight item)))))))
+    (make-result :id (knapsack-id knap) :solution (collect-result mem items) :step-counter 0)))
+
+
+(defun is-in-result (mem i c)
+  (eql (mload mem i c) (mload mem (1- i) c)))
+
+(defun collect-result (mem items) 
+  (defun collect-result-iter (mem res i current-c)
+    (if (= i 0)
+	res
+	(collect-result-iter 
+	 mem 
+	 (cons (if (is-in-result mem i current-c)
+		   1
+		   0) 
+	       res)
+	 (1- i) 
+	 (- current-c 
+	    (if (is-in-result mem i current-c)
+		(price (nth i items))
+		0)))))
+  (defun find-result-price (mem)
+    (let ((res-price 'infinity))
+      (loop 
+	 for c from 0 below (get-c-dim mem)
+	 do
+	   (setf res-price (lesser (mload mem (1- (get-i-dim mem)) c)
+				   res-price)))
+      res-price))
+  
+    (collect-result-iter mem nil (get-i-dim mem) (find-result-price mem)))
 
 
 
 
 
-
-(defun dyn-price-alg-iter (i ))
-
-
-
-
-
-
-
-
+(defun plus (opd1 opd2)
+  (if (or (eql opd1 'infinity) (eql opd2 'infinity)) 
+      'infinity
+      (+ opd1 opd2)))
 
 
 (defun get-dyn-td-results (knapsack memory)
@@ -360,6 +407,7 @@
 
 (defstruct exp-result
   (bb (make-method-result))
+  (price (make-method-result))
   (dyn (make-method-result))
   (fptas1 (make-method-result))
   (fptas2 (make-method-result))
@@ -407,10 +455,18 @@
       (proc-result tmp-res (exp-result-bb exp-res))
       ;------------------------------------------------------
       (setf before-time (get-internal-real-time))
+      (setf tmp-res (dyn-price-alg knap))
+      (setf after-time (get-internal-real-time))
+      (setf (result-start-time tmp-res) before-time)
+      (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-price exp-res))
+      ;------------------------------------------------------
+      (setf before-time (get-internal-real-time))
       (setf tmp-res (dyn-td-algorithm knap))
       (setf after-time (get-internal-real-time))
       (setf (result-start-time tmp-res) before-time)
       (setf (result-end-time tmp-res) after-time)
+      (proc-result tmp-res (exp-result-dyn exp-res))
       (proc-result tmp-res (exp-result-dyn exp-res))
       ;------------------------------------------------------
       (setf before-time (get-internal-real-time))
