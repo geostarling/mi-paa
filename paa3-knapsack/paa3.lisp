@@ -224,29 +224,21 @@
 
 ; ======================== MEMORY =========================
 
-(defun make-memory (i-dim c-dim)
-  (let* ((mem-arr (make-array `(,i-dim ,c-dim) :initial-element 'infinity))
-	(dispatch (lambda (op &rest args) 
-		    (cond
-		      ((eql op 'mload) (aref mem-arr (car args) (cadr args)))
-		      ((eql op 'mstore) (setf (aref mem-arr (car args) (cadr args)) (caddr args)))
-		      ((eql op 'get-i-dim) i-dim)
-		      ((eql op 'get-c-dim) c-dim )))))
-    (loop for i from 0 below i-dim do 
-	 (setf (aref mem-arr i 0) 0))
-    dispatch))
 
 (defun mload (mem i c)
-  (apply mem (list 'mload i c)))
+  (if (< c 0) 
+      'infinity
+      (aref mem i c)))
 
 (defun mstore (mem i c val)
-  (apply mem (list 'mstore i c val)))
+  (setf (aref mem i c) val))
 
-(defun get-i-dim (mem)
-  (apply mem (cons 'get-i-dim nil)))
+(defun get-i-dim (mem) 
+  (array-dimension mem 0))
 
-(defun get-c-dim (mem)
-  (apply mem (cons 'get-c-dim nil)))
+(defun get-c-dim (mem) 
+  (array-dimension mem 1))
+
 
 
 (defun sum (list)
@@ -257,41 +249,64 @@
 
 
 (defun lesser (a b)
+;  (print "lesser")
+;  (print a)
+;  (print b)
   (cond
     ((eql a 'infinity) nil)
     ((eql b 'infinity) t)
     (t (< a b))))
 
+(defun get-lesser (a b)
+  (if (lesser a b) a b))
+
+
 (defun dyn-price-alg (knap)
   (let* ((items (knapsack-items knap))
-	 (i-dim (length items))
-	 (c-dim (sum (mapcar #'price (knapsack-items knap))))
-	 (mem (make-memory i-dim c-dim)))
+	 (i-dim (1+ (length items)))
+	 (c-dim (1+ (sum (mapcar #'price (knapsack-items knap)))))
+	 (mem (make-array `(,i-dim ,c-dim) :initial-element 'infinity)))
+    (loop for i from 0 below i-dim do 
+	 (setf (aref mem i 0) 0))
+    ;(print "cdim")
+    ;(print c-dim)
+    ;(print items)
+
     (loop
-       for i from 0 below i-dim
+       for i from 1 below i-dim
        do
 	 (loop 
 	    for c from 0 below c-dim
 	    do
-	      (let ((item (nth (1+ i) items)))
-		(print "nil")
+	      (let ((item (nth (1- i) items)))
+		;(print item)
+		;(print i)
+		;(print c)
+		;(print mem)
+;		(if (and (= i 5) (= c 64)) (break))
+;		(break)
+		;(print (plus (mload mem i (- c (price item))) (weight item)))
 		(mstore mem 
-			(1+ i) 
+			i
 			c 
-			(minimum (mload mem i c)
-				 (+ (mload mem i (- c (price item))) (weight item)))))))
-    (make-result :id (knapsack-id knap) :solution (collect-result mem items) :step-counter 0)))
+			(minimum (mload mem (1- i) c)
+				 (plus (mload mem (1- i) (- c (price item))) (weight item)))))))
+    ;(print "res")
+    ;(print (find-result-price mem (knapsack-capacity knap)))
+    ;(print mem)
+    (make-result :id (knapsack-id knap) :solution (collect-result mem items (knapsack-capacity knap)) :step-counter 0 :price (find-result-price mem (knapsack-capacity knap)))))
 
 
 (defun is-in-result (mem i c)
-  (eql (mload mem i c) (mload mem (1- i) c)))
+  (not (eql (mload mem i c) (mload mem (1- i) c))))
 
-(defun collect-result (mem items) 
-  (defun collect-result-iter (mem res i current-c)
-    (if (= i 0)
-	res
-	(collect-result-iter 
+
+(defun collect-result-iter (mem items res i current-c)
+  (if (= i 0)
+      res
+      (collect-result-iter 
 	 mem 
+	 items
 	 (cons (if (is-in-result mem i current-c)
 		   1
 		   0) 
@@ -299,18 +314,31 @@
 	 (1- i) 
 	 (- current-c 
 	    (if (is-in-result mem i current-c)
-		(price (nth i items))
+		(price (nth (1- i) items))
 		0)))))
-  (defun find-result-price (mem)
-    (let ((res-price 'infinity))
-      (loop 
-	 for c from 0 below (get-c-dim mem)
-	 do
-	   (setf res-price (lesser (mload mem (1- (get-i-dim mem)) c)
-				   res-price)))
-      res-price))
-  
-    (collect-result-iter mem nil (get-i-dim mem) (find-result-price mem)))
+
+(defun find-result-price (mem capacity)
+  (let ((res-weight 'infinity)
+	(i-dim (get-i-dim mem))
+	(res-price 0))
+    
+    ;(print "critical")
+    ;(print (1- (get-i-dim mem)))
+    (loop 
+       for c from 1 below (get-c-dim mem)
+       do
+	 (if (lesser (mload mem (1- i-dim) c) capacity)
+	     (progn
+	       (setf res-weight  (mload mem (1- i-dim) c))
+	       (setf res-price c))))
+    res-price))
+
+(defun res-price (res) (car res))
+
+(defun res-weight (res) (cdr res))
+
+(defun collect-result (mem items capacity)  
+  (collect-result-iter mem items nil (1- (get-i-dim mem)) (find-result-price mem capacity)))
 
 
 
@@ -363,18 +391,19 @@
 (defun get-datasets ()
   (reverse 
    (list
-    (make-dataset :n 40 :path "data/knap_40.inst.dat")
-    (make-dataset :n 37 :path "data/knap_37.inst.dat")
-    (make-dataset :n 35 :path "data/knap_35.inst.dat")
-    (make-dataset :n 32 :path "data/knap_32.inst.dat")
-    (make-dataset :n 30 :path "data/knap_30.inst.dat")
-    (make-dataset :n 27 :path "data/knap_27.inst.dat")
-    (make-dataset :n 25 :path "data/knap_25.inst.dat")
-    (make-dataset :n 22 :path "data/knap_22.inst.dat")
-    (make-dataset :n 20 :path "data/knap_20.inst.dat")
-    (make-dataset :n 15 :path "data/knap_15.inst.dat")
-    (make-dataset :n 10 :path "data/knap_10.inst.dat")
-    (make-dataset :n 4 :path "data/knap_4.inst.dat"))))
+;    (make-dataset :n 40 :path "data/knap_40.inst.dat")
+;    (make-dataset :n 37 :path "data/knap_37.inst.dat")
+;    (make-dataset :n 35 :path "data/knap_35.inst.dat")
+;    (make-dataset :n 32 :path "data/knap_32.inst.dat")
+;    (make-dataset :n 30 :path "data/knap_30.inst.dat")
+;    (make-dataset :n 27 :path "data/knap_27.inst.dat")
+;    (make-dataset :n 25 :path "data/knap_25.inst.dat")
+;    (make-dataset :n 22 :path "data/knap_22.inst.dat")
+;    (make-dataset :n 20 :path "data/knap_20.inst.dat")
+;    (make-dataset :n 15 :path "data/knap_15.inst.dat")
+;    (make-dataset :n 10 :path "data/knap_10.inst.dat")
+   (make-dataset :n 4 :path "data/knap_4.inst.dat"))))
+;   (make-dataset :n 4 :path "data/knap_test.inst.dat"))))
 
 (defun run-experiments ()
   (let ((datasets (get-datasets))
@@ -456,6 +485,11 @@
       ;------------------------------------------------------
       (setf before-time (get-internal-real-time))
       (setf tmp-res (dyn-price-alg knap))
+      (print (knapsack-id knap))
+      (print "PRAJZ" )
+      (print (result-price tmp-res))
+      (print "PRAJZ2" )
+      (print (result-solution tmp-res))
       (setf after-time (get-internal-real-time))
       (setf (result-start-time tmp-res) before-time)
       (setf (result-end-time tmp-res) after-time)

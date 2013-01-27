@@ -48,3 +48,4 @@
 (defun load-all ()
   (load-knapsack "data/knap_10.inst.dat"))
 
+

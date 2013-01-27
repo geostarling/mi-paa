@@ -1,4 +1,6 @@
 ;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*- File: genetic.lisp
+(declaim (optimize (speed 2) (safety 3) (debug 3)))
+
 
 
 ;;;; Genetic Algorithm
@@ -39,6 +41,7 @@
 	 (population (make-population pop-init-fn pop-size problem)))
 
     (loop until (reached-stopping-criterion? stop-crit-fn population) 
+       do (break)
        do (print "Loop start")
        do (rescale scale-fn (population-pool population))
        do (print-genome-pool (population-pool population))
@@ -49,7 +52,21 @@
 			    problem))
        do (incf (population-age population))
        do (print "update result set"))
-    nil))
+    
+(sort 
+		    (copy-list (population-pool population))
+		    #'>
+		    :key #'genome-fitness))
+    nil)
+  
+  )
+
+
+(defun get-result (population)
+  (sort 
+   (copy-list (population-pool population))
+   #'>
+   :key #'genome-fitness))
 
 
 ;;;; Genome
@@ -146,7 +163,7 @@
   #'identity-scaling-scheme)
 
 (defmethod identity-scaling-scheme ((genome-pool list))
-  (dolist (gen genome-pool) 
+  (dolist (gen genome-pool)
     (setf (genome-scaled-fitness gen) (genome-fitness gen)))
   genome-pool)
 
@@ -159,16 +176,28 @@
     (let
 	((old-pool (sort 
 		    (copy-list (population-pool population))
-		    #'<
+		    #'>
 		    :key #'genome-fitness))
-	 (new-pool (sort genome-pool #'< :key #'genome-fitness))
+	 (new-pool (sort (copy-list genome-pool) #'> :key #'genome-fitness))
 	 (result-pool nil))
       (dotimes (idx elite-count)  ;; add elite into result
 	(push (first old-pool) result-pool)
 	(setf old-pool (rest old-pool)))
-      (loop for gen in new-pool
+     ; (print "old")
+     ; (print old-pool)
+      ;(print "result")
+     ; (print result-pool)
+    ;  (print "new-pool")
+   ;   (print new-pool)
+  ;    (print genome-pool)
+ ;     (break)
+      (loop for genome in new-pool
 	 until (= (length result-pool) (length genome-pool))
-	 do (push gen result-pool))
+;	 do (print "len res")
+;	 do (print (length result-pool))
+;	 do (print "len gen pool")
+;	 do (print (length genome-pool))
+	 do (push genome result-pool))
       result-pool)))
 
 (defun make-steady-state-repopulation ()
@@ -200,7 +229,7 @@
 ;;;; Mutations; uses side effects!!
 
 (defmethod make-bit-flip-mutation ((mutation-rate float))
-  "Constructor method that crates lambda holdin closure which immediately call appropriate method with closured value. Oh god my english really sucks!"
+  "Constructor method that crates lambda holdin closure which immediately call appropriate method with closured value."
   (if (or (< mutation-rate 0.0) (> mutation-rate 1.0))
       (error "Mutation rate must be from interval [0.0 - 1.0]")
       (lambda (genome) (bit-flip-mutation mutation-rate genome))))
@@ -219,7 +248,7 @@
 (defmethod mutate-bit ((genome genome-bit-vector) index)
   "EVIL function! uses side effects!"
   (setf (bit (genome-state genome) index) 
-	(if (= (bit (genome-state genome)  index) 0)
+	(if (= (bit (genome-state genome) index) 0)
 	    1
 	    0))
   genome)
@@ -268,7 +297,8 @@
    :pool (recalculate-fitness (funcall init-fn size problem) problem)
    :age 0
    :size size
-   ))
+   )
+)
   
 
 
@@ -277,12 +307,6 @@
   ;; populate with random states
   (loop for iter from 1 to size
      collect (make-random-genome problem)))
-
-
-
-
-
-
 
 ;;;; Printers
 ;(defmethod print-structure ((node node) stream)
@@ -295,3 +319,6 @@
 
 (defmethod print-structure ((gen genome) stream)
   (format stream "#<GENOME fitness:~D  state:~A>~%" (genome-fitness gen) (genome-state gen)))
+
+
+
