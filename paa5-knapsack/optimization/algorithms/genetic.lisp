@@ -1,5 +1,5 @@
 ;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*- File: genetic.lisp
-(declaim (optimize (speed 2) (safety 3) (debug 3)))
+(declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 
 
@@ -10,16 +10,18 @@
   (population-size 10 :type integer)
 
   (population-init-fn #'init-random-population :type function)
-  (stopping-criterion-fn (make-generation-age-condition-fn 10) :type function)
+  (stopping-criterion-fn (make-generation-age-condition-fn 100) :type function)
   (scaling-scheme-fn (make-identity-scaling-scheme) :type function)
   (repopulation-fn (make-simple-repopulation) :type function)
 
   (selection-fn (make-roulette-selection) :type function)
   (crossover-fn (make-one-point-crossover) :type function)
-  (mutation-fn (make-bit-flip-mutation 0.5) :type function)
+  (mutation-fn (make-bit-flip-mutation 0.01) :type function)
   )
 
-
+(defstruct result
+  (history nil :type list)
+)
 
 
 (defun genetic-algorithm (problem 
@@ -37,36 +39,36 @@
 	 (selection-fn (ga-config-selection-fn config))
 	 (crossover-fn (ga-config-crossover-fn config))
 	 (mutation-fn (ga-config-mutation-fn config))
-
-	 (population (make-population pop-init-fn pop-size problem)))
+	 (result (make-result))
+	 (population (make-population pop-init-fn pop-size problem))
+	 )
 
     (loop until (reached-stopping-criterion? stop-crit-fn population) 
-       do (break)
-       do (print "Loop start")
+;       do (break)
        do (rescale scale-fn (population-pool population))
-       do (print-genome-pool (population-pool population))
+;       do (print-genome-pool (population-pool population))
        do (setf (population-pool population)
 		(repopulate repopulation-fn 
 			    population 
 			    (breed population selection-fn crossover-fn mutation-fn)
 			    problem))
        do (incf (population-age population))
-       do (print "update result set"))
-    
-(sort 
-		    (copy-list (population-pool population))
-		    #'>
-		    :key #'genome-fitness))
-    nil)
-  
+;       do (print "update result set")
+       do (setf (result-history result ) (push (genome-fitness (get-result population problem)) (result-history result))))
+    result
+    )  
   )
 
 
-(defun get-result (population)
-  (sort 
-   (copy-list (population-pool population))
-   #'>
-   :key #'genome-fitness))
+(defun get-result (population problem)
+  (let* ((pool (sort 
+	       (copy-list (population-pool population))
+	       #'>
+	       :key #'genome-fitness))
+	 (best-genome (first pool)))
+    (recalculate-fitness (make-genome (greedy-repair problem (genome-state best-genome))) problem)))
+
+
 
 
 ;;;; Genome
@@ -77,9 +79,13 @@
     (age 0)
 )
 
+
+
 (defstructure (genome-bit-vector (:include genome (state nil :type bit-vector))
 				 (:constructor create-genome-bit-vector))
 )
+
+
 
 ;; Genome Constructors 
 
@@ -154,7 +160,8 @@
 ;;;; Stop conditions
 
 (defun make-generation-age-condition-fn (limit-age) 
-  (lambda (population) (= limit-age (population-age population))))
+  (lambda (population) 
+    (= limit-age (population-age population))))
 
 
 ;;;; Rescale schemes
@@ -183,20 +190,8 @@
       (dotimes (idx elite-count)  ;; add elite into result
 	(push (first old-pool) result-pool)
 	(setf old-pool (rest old-pool)))
-     ; (print "old")
-     ; (print old-pool)
-      ;(print "result")
-     ; (print result-pool)
-    ;  (print "new-pool")
-   ;   (print new-pool)
-  ;    (print genome-pool)
- ;     (break)
       (loop for genome in new-pool
 	 until (= (length result-pool) (length genome-pool))
-;	 do (print "len res")
-;	 do (print (length result-pool))
-;	 do (print "len gen pool")
-;	 do (print (length genome-pool))
 	 do (push genome result-pool))
       result-pool)))
 
@@ -237,11 +232,17 @@
 
 
 (defmethod bit-flip-mutation ((mutation-rate float) (genome genome-bit-vector))
-  "This method flips one bit if blah blah TBD doc here"
-  (if (< mutation-rate (random 1.0))
-      genome     ; mutation-rate is lower than random roll so we don;t mutate anything
-;tady chyba
-      (mutate-bit genome (random (length (genome-state genome))))))
+  "This method flips one bit if blah blah TBD doc here And returns GENOME!"
+  (let ((mutated-state (map 'bit-vector 
+			     (lambda (bit)
+			       (if (> mutation-rate (random 1.0))
+				   (if (= bit 0)
+				       1
+				       0)
+				   bit))
+			     (genome-state genome))))
+    (setf (genome-state genome) mutated-state))
+  genome)
 
 
 ;;;; Auxiliary functions
