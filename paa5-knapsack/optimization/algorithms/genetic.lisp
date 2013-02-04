@@ -174,6 +174,16 @@
     (setf (genome-scaled-fitness gen) (genome-fitness gen)))
   genome-pool)
 
+(defmethod linear-scaling-scheme ((genome-pool list))
+
+)
+
+(defmethod ranking-scaling-scheme ((genome-pool list))
+  (let ((min (min  (map 'list )))
+	(max))
+
+))
+
 
 ;;;; Repopulations
 
@@ -278,6 +288,27 @@
 			(bit-and (genome-state y-genome) (bit-not mask-vec)) 
 			t)))))
 
+(defmethod two-point-crossover ((x-genome genome-bit-vector) (y-genome genome-bit-vector))
+  "NOT effective!!!"
+  (let* ((len (length (genome-state x-genome)))
+	 (start (random len))
+	 (end (+ start (random (- len start))))
+	 (mask-vec (fill 
+		   (make-sequence 'bit-vector 
+				  (length (genome-state x-genome))
+				  :initial-element 0)
+		   1		   
+		   :start start
+		   :end end
+
+    (list (make-genome (bit-ior                               ;new x-genome
+			(bit-and (genome-state y-genome) mask-vec)
+			(bit-and (genome-state x-genome) (bit-not mask-vec)) 
+			t))
+	  (make-genome (bit-ior                               ;new y-genome
+			(bit-and (genome-state x-genome) mask-vec)
+			(bit-and (genome-state y-genome) (bit-not mask-vec)) 
+			t)))))
 
 
 
