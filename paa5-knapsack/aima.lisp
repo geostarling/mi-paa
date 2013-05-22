@@ -203,10 +203,10 @@
 
 (def-aima-system optimization (utilities)
   ""
-  ("optimization" / "test-optimization"
+  ("optimization" / "test-optimization" "exp"
     ("algorithms" / "problems" "genetic")
-    ("domains" / "knapsack")
-    ("loaders" / "knapsack-loader")))
+    ("domains" / "knapsack" "sat")
+    ("loaders" / "knapsack-loader" "sat-loader")))
 
 (def-aima-system all ()
   "All systems except the utilities system, which is always already loaded"

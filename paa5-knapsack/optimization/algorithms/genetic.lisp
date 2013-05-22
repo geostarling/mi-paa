@@ -179,8 +179,8 @@
 )
 
 (defmethod ranking-scaling-scheme ((genome-pool list))
-  (let ((min (min  (map 'list )))
-	(max))
+  (let ((min (min (map 'list #'genome-fitness genome-pool)))
+	(max (max (map 'list #'genome-fitness genome-pool))))
 
 ))
 

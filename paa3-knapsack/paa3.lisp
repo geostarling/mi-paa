@@ -1,4 +1,4 @@
-(declaim (optimize (speed 2) (safety 3) (debug 0)))
+(declaim (optimize (speed 3) (safety 3) (debug 0)))
 
 (defun string-split (string)
   (loop :for start := 0 :then (1+ finish)
@@ -262,10 +262,12 @@
 
 
 (defun dyn-price-alg (knap &optional real-knap)
+  ;(print knap)
   (let* ((items (knapsack-items knap))
 	 (i-dim (1+ (length items)))
 	 (c-dim (1+ (sum (mapcar #'price (knapsack-items knap)))))
-	 (mem (make-array `(,i-dim ,c-dim) :initial-element 'infinity)))
+	 (mem (make-array `(,i-dim ,c-dim) :initial-element 'infinity))
+	 (steps 0))
     (loop for i from 0 below i-dim do 
 	 (setf (aref mem i 0) 0))
     ;(print "cdim")
@@ -286,6 +288,7 @@
 ;		(if (and (= i 5) (= c 64)) (break))
 ;		(break)
 		;(print (plus (mload mem i (- c (price item))) (weight item)))
+		(incf steps 1)
 		(mstore mem 
 			i
 			c 
@@ -294,6 +297,9 @@
     ;(print "res")
     ;(print (find-result-price mem (knapsack-capacity knap)))
     ;(print mem)
+;    (print "steps")
+;'    (print steps)
+;    (break)
     (let ((result (collect-result mem items (knapsack-capacity knap))))
       (make-result :id (knapsack-id knap) :solution result :step-counter 0 :price (get-price result (if real-knap real-knap knap))))))
 
@@ -400,21 +406,76 @@
 ;    (make-dataset :n 27 :path "data/knap_27.inst.dat")
 ;    (make-dataset :n 25 :path "data/knap_25.inst.dat")
 ;    (make-dataset :n 22 :path "data/knap_22.inst.dat")
-    (make-dataset :n 20 :path "data/knap_20.inst.dat")
-    (make-dataset :n 15 :path "data/knap_15.inst.dat")
-    (make-dataset :n 10 :path "data/knap_10.inst.dat")
-   (make-dataset :n 4 :path "data/knap_4.inst.dat"))))
+;    (make-dataset :n 20 :path "data/knap_20.inst.dat")
+;    (make-dataset :n 15 :path "data/knap_15.inst.dat")
+;    (make-dataset :n 10 :path "data/knap_10.inst.dat"))))
+;   (make-dataset :n 4 :path "data/knap_4.inst.dat"))))
 ;   (make-dataset :n 4 :path "data/knap_test.inst.dat"))))
+
+
+
+    (make-dataset :n 24 :path "data/max-weight/knap_40.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_50.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_60.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_100.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_150.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_210.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_280.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_360.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_460.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_600.inst.dat")
+    (make-dataset :n 24 :path "data/max-weight/knap_700.inst.dat")
+
+    (make-dataset :n 24 :path "data/max-price/knap_20.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_40.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_80.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_100.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_140.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_180.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_240.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_300.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_380.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_400.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_500.inst.dat")
+    (make-dataset :n 24 :path "data/max-price/knap_600.inst.dat")
+
+;    (make-dataset :n 24 :path "data/ratio/knap_0.0001.inst.dat")
+;    (make-dataset :n 24 :path "data/ratio/knap_0.001.inst.dat")
+;   (make-dataset :n 24 :path "data/ratio/knap_0.01.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.1.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.2.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.4.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.3.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.5.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.6.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.7.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.8.inst.dat")
+    (make-dataset :n 24 :path "data/ratio/knap_0.9.inst.dat");
+;
+    (make-dataset :n 24 :path "data/granul/knap_0.0001.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_0.001.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_0.01.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_0.1.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_1.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_2.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_4.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_8.inst.dat")
+    (make-dataset :n 24 :path "data/granul/knap_16.inst.dat")
+    
+)))
+  
+
 
 (defun run-experiments ()
   (let ((datasets (get-datasets))
 	(res nil))
-    (format t "n;B&Btime;GreedyTime;DynTime;FPTAS1Time;FPTAS2Time;FPTAS3Time;FPTAS4Time;B&Bsteps;Dynsteps;FPTAS1steps;FPTAS2steps;FPTAS3steps;FPTAS4steps;DynWeightErr;DynPriceErr;GreedyErr;fptas1Err;fptas2err;fptas3err;fptas4err;~%")
+    (format t "n;path;B&Btime;GreedyTime;DynTime;FPTAS1Time;FPTAS2Time;FPTAS3Time;FPTAS4Time;DynWeightErr;DynPriceErr;GreedyErr;fptas1Err;fptas2err;fptas3err;fptas4err;~%")
 
    (dolist (ds datasets)
       (setf res (experiment ds))
-      (format t "~D;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~5,3F;~%" 
+      (format t "~D;~S;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~5,5F;~%" 
 	      (dataset-n ds)
+	      (dataset-path ds)
 	      (method-result-duration (exp-result-bb res))
 	      (method-result-duration (exp-result-greedy res))
 	      (method-result-duration (exp-result-dyn res))
@@ -422,12 +483,12 @@
 	      (method-result-duration (exp-result-fptas2 res))
 	      (method-result-duration (exp-result-fptas3 res))
 	      (method-result-duration (exp-result-fptas4 res))
-	      (method-result-step-counter (exp-result-bb res))
-	      (method-result-step-counter (exp-result-dyn res))
-	      (method-result-step-counter (exp-result-fptas1 res))
-	      (method-result-step-counter (exp-result-fptas2 res))
-	      (method-result-step-counter (exp-result-fptas3 res))
-	      (method-result-step-counter (exp-result-fptas4 res))
+;	      (method-result-step-counter (exp-result-bb res))
+;	      (method-result-step-counter (exp-result-dyn res))
+;	      (method-result-step-counter (exp-result-fptas1 res))
+;	      (method-result-step-counter (exp-result-fptas2 res))
+;	      (method-result-step-counter (exp-result-fptas3 res))
+;	      (method-result-step-counter (exp-result-fptas4 res))
 	      (method-result-rel-error (exp-result-dyn res))
 	      (method-result-rel-error (exp-result-price res))
 	      (method-result-rel-error (exp-result-greedy res))
@@ -447,6 +508,8 @@
   (fptas2 (make-method-result))
   (fptas3 (make-method-result))
   (fptas4 (make-method-result))
+  (fptas5 (make-method-result))
+  (fptas6 (make-method-result))
   (greedy (make-method-result))
   )
 
@@ -538,7 +601,11 @@
       (setf after-time (get-internal-real-time))
       (setf (result-start-time tmp-res) before-time)
       (setf (result-end-time tmp-res) after-time)
-      (proc-result tmp-res (exp-result-fptas4 exp-res)))
+      (proc-result tmp-res (exp-result-fptas4 exp-res))
+      ;(print (approximate-knapsack-prices knap 10))
+      ;(print tmp-res)
+      ;(break)
+
 
     ;; prumerovani
     (let ((solution-price (method-result-rel-error (exp-result-dyn exp-res))))
@@ -550,8 +617,12 @@
       (post-proc-results inst-count (exp-result-fptas1 exp-res) solution-price)
       (post-proc-results inst-count (exp-result-fptas2 exp-res) solution-price)
       (post-proc-results inst-count (exp-result-fptas3 exp-res) solution-price)
-      (post-proc-results inst-count (exp-result-fptas4 exp-res) solution-price))
-    exp-res))
+      (post-proc-results inst-count (exp-result-fptas4 exp-res) solution-price)
+      (post-proc-results inst-count (exp-result-fptas5 exp-res) solution-price)
+      (post-proc-results inst-count (exp-result-fptas6 exp-res) solution-price))
+    )
+    exp-res
+))
 
 (defun post-proc-results (inst-count result-agg solution-price)
   
@@ -639,7 +710,7 @@
 			  (ash (cdr x) (- ratio)) 
 			  1))) 
 	    (knapsack-items knap-approx)) 
-    (setf (knapsack-capacity knap-approx) (ash (knapsack-capacity knap-approx) (- ratio)))
-  knap-approx
+    
+    knap-approx
     )
 )
