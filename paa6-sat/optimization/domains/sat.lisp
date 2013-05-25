@@ -1,3 +1,5 @@
+(declaim (optimize (speed 3) (safety 0) (debug 0)))
+
 ;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*- File: knapsack.lisp
 
 ;;;; The Knapsack Problem
@@ -35,9 +37,11 @@
   (floor (* (fitness-fn problem state) (penalty-fn problem state))))
 
 (defmethod fitness-fn ((problem sat-problem) (state bit-vector))
-  (map 'list (lambda (literal bit)
-	       (* (literal-weight literal) bit)) state)
-)
+  (apply #'+
+	 (map 'list 
+	      (lambda (literal bit) (* (literal-weight literal) bit))
+	      (sat-problem-literals problem) 
+	      state)))
 
 (defmethod penalty-fn ((problem sat-problem) (state bit-vector)) 
   "Compute penalty koeficient in range <0,1>"
@@ -50,12 +54,12 @@
 
 (defun is-satisfied-iter (literals state)
   (if (not literals)
-      T
+      NIL
       (let ((lit (car literals)))
 	(if (or 
-	     (and (= (bit state (literal-index lit)) 1) (literal-neg lit))
-	     (and (= (bit state (literal-index lit)) 0) (not (literal-neg lit))))
-	    NIL
+	     (and (= (bit state (literal-index lit)) 0) (literal-neg lit))
+	     (and (= (bit state (literal-index lit)) 1) (not (literal-neg lit))))
+	    T
 	    (is-satisfied-iter (cdr literals) state)))))
 
 
@@ -63,8 +67,8 @@
   (let ((satisfied-clauses nil))
     (loop for clause in (sat-problem-clauses problem)
        do (if (is-satisfied clause state)
-	      (setf satisfied-clauses (cons clause satisfied-clauses))))
-  satisfied-clauses))
+		(setf satisfied-clauses (cons clause satisfied-clauses))))
+       satisfied-clauses))
 
 
 
@@ -84,3 +88,76 @@
 
 (defun init-state (literals)
   (make-array (length literals) :element-type 'bit :initial-element 0))
+
+
+(defstruct bf-state
+  (state)
+  (order)
+)
+
+(defmethod brute-force ((sat sat-problem))
+;; takes knapsack and returns bestConfiguration
+  (let* ((stack nil)
+	(var-num (length (sat-problem-literals sat)))
+	(init-0 (make-bf-state :state (make-sequence 'bit-vector var-num :initial-element 0) :order 0))
+	(init-1 (make-bf-state :state (make-sequence 'bit-vector var-num :initial-element 0) :order 1))
+	)
+    (setf (bit (bf-state-state init-1) 0) 1)
+    (push init-0 stack)
+;    (push init-1 stack)
+    (bf-optimize sat stack 0 0)
+    ))
+  
+
+(defun is-solution (state problem)
+;  (print "sat claus")
+;  (print (get-satisfied-clauses problem #*1000))
+;  (break)
+  (= (length (sat-problem-clauses problem)) (length (get-satisfied-clauses problem state))))
+
+(defun bf-optimize (sat stack solution iter-count)
+;  (print "STACK:")
+ ; (print stack)
+  (let ((stack-top (pop stack))
+	(it iter-count))
+
+;    (print "Top of stack contains: ")
+;    (prin1 stack-top)
+    (if (not stack-top) 
+	solution
+	(progn
+	  (if (= (bf-state-order stack-top) (sat-problem-dimension sat))
+	      (progn 
+		(if (= 0 (mod iter-count 1000))
+		    (print iter-count))
+		(incf it)
+		(if (is-solution (bf-state-state stack-top) sat)
+					; solution found
+		    (let ((res (fitness-fn sat (bf-state-state stack-top))))
+;		    (print stack-top)
+;		    (print "res")
+;		    (print res)
+		      (if (>= res solution)
+			  (setf solution res))))))
+	  (let ((child-states (get-child-states stack-top)))		    
+	    (if (car child-states)
+		(push (car child-states) stack))
+	    (if (cadr child-states)
+		(push (cadr child-states) stack))
+	    (bf-optimize sat stack solution it)
+	    )))))
+
+
+
+(defun get-child-states (bf-state)
+  (let ((order (bf-state-order bf-state)))
+    (if (> order (- (length (bf-state-state bf-state)) 1))
+	nil
+	(let
+	    ((state-0 (copy-seq (bf-state-state bf-state)))
+	     (state-1 (copy-seq (bf-state-state bf-state))))
+	  (setf (bit state-0  order) 0)
+	  (setf (bit state-1  order) 1)
+	  (list (make-bf-state :state state-0 :order (1+ order) )
+		(make-bf-state :state state-1 :order (1+ order) ))))))
+		

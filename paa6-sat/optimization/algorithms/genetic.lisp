@@ -71,6 +71,7 @@
 
 
 
+
 ;;;; Genome
 
 (defstructure (genome (:include node)
@@ -300,7 +301,7 @@
 		   1		   
 		   :start start
 		   :end end
-
+		   )))
     (list (make-genome (bit-ior                               ;new x-genome
 			(bit-and (genome-state y-genome) mask-vec)
 			(bit-and (genome-state x-genome) (bit-not mask-vec)) 

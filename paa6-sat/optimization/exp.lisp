@@ -18,7 +18,7 @@
 "
 
 (defun experiment ()
-  (let ((dataset (load-all "data/knap_40.inst.dat"))
+  (let ((dataset (load-sat-all (list "datasat/uf20-09.cnf")))
 	(results nil)
 	(config (make-ga-config :population-size 35 
 				:stopping-criterion-fn (make-generation-age-condition-fn 100) 
@@ -49,3 +49,24 @@
 		 (exp-result-history exp-res))
 	 (format str "~%"))
        results))))
+
+
+
+
+(defun bf-experiment ()
+  (let ((dataset (load-sat-all (list "datasat/random_ksat.dimacs"))))
+
+
+    (with-open-file (str "/tmp/out.csv"
+			 :direction :output
+			 :if-exists :supersede
+			 :if-does-not-exist :create)
+      (dolist (instance dataset)
+
+	(let ((result nil)
+	      (before nil)
+	      (after nil))
+	      (setf before (get-internal-real-time))
+	      (setf result (brute-force instance))
+	      (setf after (get-internal-real-time))
+	      (print result))))))

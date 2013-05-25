@@ -60,7 +60,7 @@
 	    (setf current-lits (cons current-lit current-lits)))
 	  )
 	(setf clauses-res (cons (make-clause :literals current-lits) clauses-res))))
-    (make-sat-problem :id name :literals literals-res :clauses clauses-res)))
+    (make-sat-problem :id name :literals (reverse literals-res) :clauses clauses-res)))
 
 
 
