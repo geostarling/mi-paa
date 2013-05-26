@@ -128,7 +128,7 @@
     (setf (bit (bf-state-state init-1) 0) 1)
     (push init-0 stack)
 ;    (push init-1 stack)
-    (bf-optimize sat stack 0 0)
+    (bf-optimize sat stack 0 nil)
     ))
   
 
@@ -138,36 +138,34 @@
 ;  (break)
   (= (length (sat-problem-clauses problem)) (length (get-satisfied-clauses problem state))))
 
-(defun bf-optimize (sat stack solution iter-count)
+(defun bf-optimize (sat stack solution res-iter)
 ;  (print "STACK:")
  ; (print stack)
-  (let ((stack-top (pop stack))
-	(it iter-count))
+  (let* ((stack-top (pop stack)))
 
 ;    (print "Top of stack contains: ")
 ;    (prin1 stack-top)
     (if (not stack-top) 
-	solution
+	(progn
+	  (print res-iter)
+	  solution)
 	(progn
 	  (if (= (bf-state-order stack-top) (sat-problem-dimension sat))
 	      (progn 
-		(if (= 0 (mod iter-count 1000))
-		    (print iter-count))
-		(incf it)
 		(if (is-solution (bf-state-state stack-top) sat)
 					; solution found
 		    (let ((res (fitness-fn sat (bf-state-state stack-top))))
-;		    (print stack-top)
-;		    (print "res")
-;		    (print res)
 		      (if (>= res solution)
-			  (setf solution res))))))
+			  (progn
+			    (setf solution res)
+			    (setf res-iter stack-top)
+			    ))))))
 	  (let ((child-states (get-child-states stack-top)))		    
 	    (if (car child-states)
 		(push (car child-states) stack))
 	    (if (cadr child-states)
 		(push (cadr child-states) stack))
-	    (bf-optimize sat stack solution it)
+	    (bf-optimize sat stack solution res-iter)
 	    )))))
 
 

@@ -51,22 +51,39 @@
        results))))
 
 
-
+(defstruct bf-res var-num clauses-num solution)
 
 (defun bf-experiment ()
-  (let ((dataset (load-sat-all (list "datasat/random_ksat.dimacs"))))
+  (let ((iter 0)
+	(dataset (load-sat-all 
+		  (reverse (list 
+
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-20-100_1.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-20-100_2.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-20-100_3.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-20-100_4.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-20-100_5.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-25-125_1.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-25-125_2.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-25-125_3.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-25-125_4.cnf"
+"/home/watanabe/mi-paa/paa6-sat/datasat/soft-5/3sat-25-125_5.cnf"
 
 
-    (with-open-file (str "/tmp/out.csv"
+
+)))))
+    (with-open-file (str "/home/watanabe/mi-paa/paa6-sat/datasat/solutions-5-2.csv"
 			 :direction :output
 			 :if-exists :supersede
 			 :if-does-not-exist :create)
       (dolist (instance dataset)
-
-	(let ((result nil)
-	      (before nil)
-	      (after nil))
-	      (setf before (get-internal-real-time))
-	      (setf result (brute-force instance))
-	      (setf after (get-internal-real-time))
-	      (print result))))))
+	(let ((result (brute-force instance)))
+	      (print result)
+	      (format str "~5,3F;" (1+ iter))
+	      (incf iter)
+	      (setf iter (mod iter 5))
+	      (format str "~5,3F;" (sat-problem-dimension instance))
+	      (format str "~5,3F;" (length (sat-problem-clauses instance)))
+	      (format str "~5,3F;" result)
+	      (format str "~%"))
+	))))
