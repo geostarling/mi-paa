@@ -34,7 +34,7 @@
   )
 
 (defmethod objective-fn ((problem sat-problem) (state bit-vector)) 
-  (floor (* (fitness-fn problem state) (penalty-fn problem state))))
+  (floor (* (fitness-fn problem state) (penalty-fn-multi problem state))))
 
 (defmethod fitness-fn ((problem sat-problem) (state bit-vector))
   (apply #'+
@@ -43,10 +43,26 @@
 	      (sat-problem-literals problem) 
 	      state)))
 
-(defmethod penalty-fn ((problem sat-problem) (state bit-vector)) 
+(defmethod penalty-fn-multi ((problem sat-problem) (state bit-vector)) 
   "Compute penalty koeficient in range <0,1>"
   (/ (length (get-satisfied-clauses problem state)) (length (sat-problem-clauses problem)))
 )
+
+(defmethod penalty-fn-add ((problem sat-problem) (state bit-vector)) 
+  "Compute penalty koeficient in range <0,1>"
+  (let ((result 0))
+    (dolist (cl (get-unsatisfied-clauses problem state))
+      (incf result (get-largest-literal-weight cl)))
+    result
+)
+
+(defmethod get-largest-literal-weight ((clause clause))
+  (let ((res 0))
+    (dolist (lit (clause-literals clause))
+      (if (> (literal-weight lit) res)
+	  (setf res (literal-weight lit))))
+    res))
+
 
 (defmethod is-satisfied ((clause clause) (state bit-vector))
   (is-satisfied-iter (clause-literals clause) state)
@@ -69,6 +85,13 @@
        do (if (is-satisfied clause state)
 		(setf satisfied-clauses (cons clause satisfied-clauses))))
        satisfied-clauses))
+
+(defmethod get-unsatisfied-clauses ((problem sat-problem) (state bit-vector))
+  (let ((unsatisfied-clauses nil))
+    (loop for clause in (sat-problem-clauses problem)
+       do (if (not (is-satisfied clause state))
+		(setf unsatisfied-clauses (cons clause unsatisfied-clauses))))
+       unsatisfied-clauses))
 
 
 
