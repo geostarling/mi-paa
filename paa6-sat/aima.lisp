@@ -6,7 +6,7 @@
 
 ;;;; A minimal facility for defining systems of files
 
-(defparameter *aima-root* (truename "/mnt/diskData/Sources/LispProjects/mi-paa/paa6-sat/") ; <<<<<<<< Edit this <<<<<<
+(defparameter *aima-root* (truename "/home/watanabe/mi-paa/paa6-sat/") ; <<<<<<<< Edit this <<<<<<
   "The root directory where the code is stored.")
 
 (defparameter *aima-binary-type*
