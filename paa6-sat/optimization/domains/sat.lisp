@@ -34,7 +34,11 @@
   )
 
 (defmethod objective-fn ((problem sat-problem) (state bit-vector)) 
-  (floor (* (fitness-fn problem state) (penalty-fn-multi problem state))))
+  (let ((res (floor (* (fitness-fn problem state) (penalty-fn-multi problem state)))))
+;    (print res)
+;    (print (penalty-fn-multi problem state))
+;    (print state)
+    res))
 
 (defmethod fitness-fn ((problem sat-problem) (state bit-vector))
   (apply #'+
@@ -54,7 +58,7 @@
     (dolist (cl (get-unsatisfied-clauses problem state))
       (incf result (get-largest-literal-weight cl)))
     result
-)
+))
 
 (defmethod get-largest-literal-weight ((clause clause))
   (let ((res 0))
@@ -67,6 +71,11 @@
 (defmethod is-satisfied ((clause clause) (state bit-vector))
   (is-satisfied-iter (clause-literals clause) state)
 )
+
+(defmethod is-satisfied ((problem sat-problem) (state bit-vector))
+  (= (length (get-satisfied-clauses problem state) ) (length (sat-problem-clauses problem)))
+)
+
 
 (defun is-satisfied-iter (literals state)
   (if (not literals)

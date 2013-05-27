@@ -21,6 +21,7 @@
 
 (defstruct result
   (history nil :type list)
+  (satisfied NIL)
 )
 
 
@@ -29,7 +30,7 @@
 			  (config (make-ga-config)))
   "Some useful comment."
 
-  (let* (
+  (let* ((iter-res nil)
 	 (pop-init-fn (ga-config-population-init-fn config))
 	 (pop-size (ga-config-population-size config))
 	 (stop-crit-fn (ga-config-stopping-criterion-fn config))
@@ -54,21 +55,33 @@
 			    problem))
        do (incf (population-age population))
 ;       do (print "update result set")
-       do (setf (result-history result ) (push (genome-fitness (get-result population problem)) (result-history result))))
+       do (setf iter-res (get-result population problem))
+;       do (setf (result-history result) (push (get-real-fitness iter-res problem) (result-history result)))
+       do (setf (result-satisfied result) (is-satisfied problem (genome-state iter-res))))
+    
+    (setf (result-history result) (push (get-real-fitness iter-res problem) (result-history result)))
     result
     )  
   )
 
+(defun get-real-fitness (genome problem)
+  (fitness-fn problem (genome-state genome))
+)
 
 (defun get-result (population problem)
-  (let* ((pool (sort 
-	       (copy-list (population-pool population))
-	       #'>
-	       :key #'genome-fitness))
-	 (best-genome (first pool)))
-    (recalculate-fitness (make-genome (greedy-repair problem (genome-state best-genome))) problem)))
+  (let* ((sat-pool (sort (filter-unsatisfied (copy-list (population-pool population)) problem) #'> :key #'genome-fitness))
+	 (unsat-pool (sort (copy-list (population-pool population)) #'> :key #'genome-fitness)))
+    (if sat-pool
+	(progn
+;	  (print "Found solution:")
+;	  (print (first sat-pool))
+	  (first sat-pool))
+	(progn
+;	  (print "Result not found")
+	  (first unsat-pool)
 
-
+	  )
+	)))
 
 
 
@@ -127,7 +140,7 @@
 (defun repopulate (repopulate-fn population genome-pool problem)
   "This function doesnt changes given population structure. Just returns list of new generation genomes that must be set to population structure."
   (recalculate-fitness genome-pool problem)
-  (funcall repopulate-fn population genome-pool)
+  (funcall repopulate-fn population genome-pool problem)
 )
 
 ;;;; Aux
@@ -175,20 +188,62 @@
     (setf (genome-scaled-fitness gen) (genome-fitness gen)))
   genome-pool)
 
-(defmethod linear-scaling-scheme ((genome-pool list))
+;(defmethod linear-scaling-scheme ((genome-pool list))
 
-)
+;)
 
-(defmethod ranking-scaling-scheme ((genome-pool list))
-  (let ((min (min (map 'list #'genome-fitness genome-pool)))
-	(max (max (map 'list #'genome-fitness genome-pool))))
+;(defmethod ranking-scaling-scheme ((genome-pool list))
+;  (let ((min (min (map 'list #'genome-fitness genome-pool)))
+;	(max (max (map 'list #'genome-fitness genome-pool))))
 
-))
+;))
+
+
 
 
 ;;;; Repopulations
 
-(defun make-simple-repopulation (&optional (elite-count 1))
+(defun filter-unsatisfied (genome-list problem)
+  (let ((res nil))
+;    (print "genome-list")
+;    (print genome-list)
+    (dolist (gen genome-list)
+;      (print gen)
+      (if gen
+	  (if (is-satisfied problem (genome-state gen))
+	      (push gen res)
+	      ))
+      )
+    res
+    )
+)
+
+(defun make-simple-repopulation (&optional (elite-count 1) (preserve-satisfied 1))
+; TBD check elite-count boundary
+  (lambda (population genome-pool problem)
+    (let
+	((old-pool (sort 
+		    (copy-list (population-pool population))
+		    #'>
+		    :key #'genome-fitness))
+	 (sat-pool (sort (filter-unsatisfied (copy-list (population-pool population)) problem) #'> :key #'genome-fitness))
+	 (new-pool (sort (copy-list genome-pool) #'> :key #'genome-fitness))
+	 (result-pool nil))
+
+      (dotimes (idx preserve-satisfied)  ;; add sat into result
+	(if sat-pool
+	    (push (first sat-pool) result-pool)
+	    (setf sat-pool (rest sat-pool))))
+    	 
+      (dotimes (idx elite-count)  ;; add elite into result
+	(push (first old-pool) result-pool)
+	(setf old-pool (rest old-pool)))
+      (loop for genome in new-pool
+	 until (= (length result-pool) (length genome-pool))
+	 do (push genome result-pool))
+      result-pool)))
+
+(defun make-complex-repopulation (&optional (elite-count 1))
 ; TBD check elite-count boundary
   (lambda (population genome-pool)
     (let
@@ -205,6 +260,7 @@
 	 until (= (length result-pool) (length genome-pool))
 	 do (push genome result-pool))
       result-pool)))
+
 
 (defun make-steady-state-repopulation ()
   nil 
@@ -243,7 +299,7 @@
 
 
 (defmethod bit-flip-mutation ((mutation-rate float) (genome genome-bit-vector))
-  "This method flips one bit if blah blah TBD doc here And returns GENOME!"
+  "This method flips one bit if "
   (let ((mutated-state (map 'bit-vector 
 			     (lambda (bit)
 			       (if (> mutation-rate (random 1.0))
