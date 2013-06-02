@@ -53,7 +53,7 @@
 )
 
 (defmethod penalty-fn-add ((problem sat-problem) (state bit-vector)) 
-  "Compute penalty koeficient in range <0,1>"
+  "Compute penalty koeficient"
   (let ((result 0))
     (dolist (cl (get-unsatisfied-clauses problem state))
       (incf result (get-largest-literal-weight cl)))
