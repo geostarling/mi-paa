@@ -4,13 +4,13 @@
 
 (defun run-experiment ()
   (let ((data-list (list
-		    (list *dimacs-1-list* "datasat/results-dimacs/mutation-rate/mut-rate-99-dimacs-1.csv" )
-		    (list *dimacs-2-list* "datasat/results-dimacs/mutation-rate/mut-rate-99-dimacs-2.csv" )
-		    (list *dimacs-3-list* "datasat/results-dimacs/mutation-rate/mut-rate-99-dimacs-3.csv" )
-		    (list *dimacs-4-list* "datasat/results-dimacs/mutation-rate/mut-rate-99-dimacs-4.csv" )
-		    (list *dimacs-5-list* "datasat/results-dimacs/mutation-rate/mut-rate-99-dimacs-5.csv" )
-		    (list *dimacs-6-list* "datasat/results-dimacs/mutation-rate/mut-rate-99-dimacs-6.csv" )
-		    (list *dimacs-7-list* "datasat/results-dimacs/mutation-rate/mut-rate-99-dimacs-7.csv" )
+		    (list *dimacs-1-list* "datasat/results-dimacs/penalty/rate-5-dimacs-1.csv" )
+		    (list *dimacs-2-list* "datasat/results-dimacs/penalty/rate-5-dimacs-2.csv" )
+		    (list *dimacs-3-list* "datasat/results-dimacs/penalty/rate-5-dimacs-3.csv" )
+		    (list *dimacs-4-list* "datasat/results-dimacs/penalty/rate-5-dimacs-4.csv" )
+		    (list *dimacs-5-list* "datasat/results-dimacs/penalty/rate-5-dimacs-5.csv" )
+		    (list *dimacs-6-list* "datasat/results-dimacs/penalty/rate-5-dimacs-6.csv" )
+;		    (list *dimacs-7-list* "datasat/results-dimacs/mutation-rate/mut-rate-001-dimacs-7.csv" )
 
 )))
   (dolist (ins data-list)
@@ -26,9 +26,10 @@
 	(results nil)
 	(config (make-ga-config :population-size 100
 				:stopping-criterion-fn (make-generation-age-condition-fn 500)
+;				:scaling-scheme-fn (make-linear-scaling-scheme 0.7)
 				:crossover-fn (make-one-point-crossover 0.99)
 				:repopulation-fn (make-simple-repopulation 3 1)
-				:mutation-fn (make-bit-flip-mutation 0.99) )))
+				:mutation-fn (make-bit-flip-mutation 0.15) )))
     (with-open-file (str out-file
 			 :direction :output
 			 :if-exists :supersede

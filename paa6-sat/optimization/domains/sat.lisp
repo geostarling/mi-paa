@@ -35,10 +35,12 @@
 
 (defmethod objective-fn ((problem sat-problem) (state bit-vector)) 
   (let ((res (floor (* (fitness-fn problem state) (penalty-fn-multi problem state)))))
+    (if (< res 0)
+	0
 ;    (print res)
 ;    (print (penalty-fn-multi problem state))
 ;    (print state)
-    res))
+	res)))
 
 (defmethod fitness-fn ((problem sat-problem) (state bit-vector))
   (apply #'+

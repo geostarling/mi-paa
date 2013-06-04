@@ -303,13 +303,16 @@
 (defun roulette-selection (population)
   ;; tady je problem v pripade kdy maji vschny genomy fitness 0 tak random vrati chybu
   (let* ((fitness-sum (apply #'+ (map 'list #'genome-scaled-fitness (population-pool population))))
-	(random-roll (random fitness-sum)))
+	(random-roll (random (1+ fitness-sum))))
 
     (defun inner-loop (genomes-list roll-remainder)
-      (if (< roll-remainder (genome-scaled-fitness (first genomes-list)))
+      (if (rest genomes-list)
+	  (if (< roll-remainder (genome-scaled-fitness (first genomes-list)))
+	      (first genomes-list)
+	      (inner-loop (rest genomes-list) 
+			  (- roll-remainder (genome-scaled-fitness (first genomes-list)))))
 	  (first genomes-list)
-	  (inner-loop (rest genomes-list) 
-		      (- roll-remainder (genome-scaled-fitness (first genomes-list))))))
+	  ))
     (inner-loop (population-pool population) random-roll)))
 
 ;;;; Mutations; uses side effects!!

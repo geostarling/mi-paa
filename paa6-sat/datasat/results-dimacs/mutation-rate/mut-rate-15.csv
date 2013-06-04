@@ -1,0 +1,101 @@
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-030.cnf	20	21	T	1	20	21	855	855	855	0		total		results:											
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-031.cnf	20	21	T	2	20	21	909	877	909	0.0364880274		sat	relerror	sat	relerror	sat	relerror	sat	relerror	sat	relerror	sat	relerror	sat	relerror
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-032.cnf	20	21	T	3	20	21	894	820	894	0.0902439024		0.6170212766	0.1283462025	1	0.028311587	1	0.1263692614	0.619047619	0.2652508817	0.1428571429	0.1478570041	0	0.0174046186	0	0.0107913041
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-033.cnf	20	21	T	4	20	21	866	847	866	0.0224321133															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-034.cnf	20	21	T	5	20	21	1065	1015	1065	0.0492610837															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-035.cnf	20	21	T	1	20	21	971	971	971	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-036.cnf	20	21	T	2	20	21	890	850	890	0.0470588235															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-037.cnf	20	21	T	3	20	21	1022	1005	999	0.0059701493															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-038.cnf	20	21	T	4	20	21	861	827	852	0.0302297461															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-039.cnf	20	21	T	5	20	21	927	927	927	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-040.cnf	20	21	T	1	20	21	920	833	920	0.1044417767															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-041.cnf	20	21	T	2	20	21	1072	1039	1072	0.031761309															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-042.cnf	20	21	T	3	20	21	949	949	949	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-043.cnf	20	21	T	4	20	21	922	908	909	0.0011013216															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-044.cnf	20	21	T	5	20	21	821	815	806	0.0110429448															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-045.cnf	20	21	T	1	20	21	980	980	977	0.0030612245															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-046.cnf	20	21	T	2	20	21	1018	1018	1018	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-047.cnf	20	21	T	3	20	21	1171	1011	1136	0.1236399604															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-048.cnf	20	21	T	4	20	21	1043	1005	1043	0.0378109453															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-049.cnf	20	21	T	5	20	21	993	993	993	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-1/1-uf20-050.cnf	20	21	T	1	20	21	1131	1131	1131	0															
+				21	1				avg	0.028311587															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-030.cnf	20	41	T	1	20	41	797	758	797	0.0514511873															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-031.cnf	20	41	T	2	20	41	880	804	761	0.0534825871															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-032.cnf	20	41	T	3	20	41	894	883	894	0.0124575311															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-033.cnf	20	41	T	4	20	41	794	669	432	0.3542600897															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-034.cnf	20	41	T	5	20	41	1065	1065	1065	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-035.cnf	20	41	T	1	20	41	879	534	879	0.6460674157															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-036.cnf	20	41	T	2	20	41	813	813	795	0.0221402214															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-037.cnf	20	41	T	3	20	41	1005	1001	1005	0.003996004															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-038.cnf	20	41	T	4	20	41	761	593	914	0.5413153457															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-039.cnf	20	41	T	5	20	41	787	749	583	0.2216288385															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-040.cnf	20	41	T	1	20	41	793	788	742	0.0583756345															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-041.cnf	20	41	T	2	20	41	1011	984	984	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-042.cnf	20	41	T	3	20	41	932	924	932	0.0086580087															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-043.cnf	20	41	T	4	20	41	897	775	816	0.0529032258															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-044.cnf	20	41	T	5	20	41	714	664	835	0.2575301205															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-045.cnf	20	41	T	1	20	41	971	971	971	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-046.cnf	20	41	T	2	20	41	914	914	914	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-047.cnf	20	41	T	3	20	41	1137	1087	1137	0.0459981601															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-048.cnf	20	41	T	4	20	41	995	959	1114	0.1616266945															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-049.cnf	20	41	T	5	20	41	866	863	814	0.056778679															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-2/2-uf20-050.cnf	20	41	T	1	20	41	936	885	792	0.1050847458															
+				21	1				avg	0.1263692614															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-030.cnf	20	61	T	1	20	61	741	741	855	0.1538461538															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-031.cnf	20	61	NIL	2	20	61	819	1002	967	0.0349301397															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-032.cnf	20	61	T	3	20	61	798	731	953	0.3036935705															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-033.cnf	20	61	NIL	4	20	61	687	1022	1027	0.0048923679															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-034.cnf	20	61	T	5	20	61	1016	926	1016	0.0971922246															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-035.cnf	20	61	T	1	20	61	740	447	971	1.1722595078															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-036.cnf	20	61	NIL	2	20	61	713	996	996	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-037.cnf	20	61	T	3	20	61	898	749	1062	0.4178905207															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-038.cnf	20	61	T	4	20	61	533	387	936	1.4186046512															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-039.cnf	20	61	T	5	20	61	725	683	593	0.1317715959															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-040.cnf	20	61	T	1	20	61	739	739	971	0.3139377537															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-041.cnf	20	61	NIL	2	20	61	845	1130	1141	0.0097345133															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-042.cnf	20	61	NIL	3	20	61	829	1055	1055	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-043.cnf	20	61	NIL	4	20	61	691	1014	569	0.4388560158															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-044.cnf	20	61	T	5	20	61	623	623	809	0.2985553772															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-045.cnf	20	61	NIL	1	20	61	846	1126	1126	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-046.cnf	20	61	T	2	20	61	914	754	1136	0.5066312997															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-047.cnf	20	61	T	3	20	61	994	851	983	0.1551116334															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-048.cnf	20	61	T	4	20	61	949	917	949	0.0348964013															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-049.cnf	20	61	NIL	5	20	61	746	993	993	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-3/3-uf20-050.cnf	20	61	T	1	20	61	915	852	786	0.0774647887															
+				13	0.619047619				avg	0.2652508817															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-020.cnf	20	91	NIL	1	20	91	502	878	899	0.0239179954															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-021.cnf	20	91	NIL	2	20	91	745	1284	1284	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-022.cnf	20	91	NIL	3	20	91	540	1163	1163	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-023.cnf	20	91	NIL	4	20	91	419	846	859	0.0153664303															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-024.cnf	20	91	NIL	5	20	91	677	919	932	0.0141458107															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-025.cnf	20	91	NIL	1	20	91	820	1045	820	0.2153110048															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-026.cnf	20	91	NIL	2	20	91	314	578	575	0.0051903114															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-027.cnf	20	91	NIL	3	20	91	839	1123	1142	0.0169189671															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-028.cnf	20	91	NIL	4	20	91	584	928	928	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-029.cnf	20	91	NIL	5	20	91	168	932	967	0.0375536481															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-030.cnf	20	91	T	1	20	91	568	431	860	0.9953596288															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-031.cnf	20	91	NIL	2	20	91	573	1022	1022	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-032.cnf	20	91	NIL	3	20	91	307	953	953	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-033.cnf	20	91	NIL	4	20	91	414	1027	1032	0.0048685492															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-034.cnf	20	91	T	5	20	91	803	703	1147	0.6315789474															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-035.cnf	20	91	NIL	1	20	91	433	979	979	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-036.cnf	20	91	NIL	2	20	91	713	996	975	0.0210843373															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-037.cnf	20	91	NIL	3	20	91	629	1098	1106	0.0072859745															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-038.cnf	20	91	T	4	20	91	463	444	936	1.1081081081															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-039.cnf	20	91	NIL	5	20	91	622	989	989	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs/uf20-040.cnf	20	91	NIL	1	20	91	352	963	971	0.0083073728															
+				3	0.1428571429				avg	0.1478570041															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-5/3sat-20-100_1.cnf	20	100	NIL	1	20	100	567	1038	1071	0.0317919075															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-5/3sat-20-100_2.cnf	20	100	NIL	2	20	100	601	1156	1131	0.0216262976															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-5/3sat-20-100_3.cnf	20	100	NIL	3	20	100	548	1167	1167	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-5/3sat-20-100_4.cnf	20	100	NIL	4	20	100	428	982	949	0.033604888															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-5/3sat-20-100_5.cnf	20	100	NIL	5	20	100	734	1076	1076	0															
+				0	0				avg	0.0174046186															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-6/3sat-20-120_1.cnf	20	120	NIL	1	20	120	576	933	955	0.0235798499															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-6/3sat-20-120_2.cnf	20	120	NIL	2	20	120	602	842	842	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-6/3sat-20-120_3.cnf	20	120	NIL	3	20	120	439	903	903	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-6/3sat-20-120_4.cnf	20	120	NIL	4	20	120	790	910	910	0															
+/home/watanabe/mi-paa/paa6-sat/datasat/dimacs-6/3sat-20-120_5.cnf	20	120	NIL	5	20	120	390	823	848	0.0303766707															
+				0	0				avg	0.0107913041															
+				58	0.6170212766				total avg	0.1283462025															
