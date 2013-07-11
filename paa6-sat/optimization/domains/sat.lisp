@@ -35,10 +35,12 @@
 
 (defmethod objective-fn ((problem sat-problem) (state bit-vector)) 
   (let ((res (floor (* (fitness-fn problem state) (penalty-fn-multi problem state)))))
+    (if (< res 0)
+	0
 ;    (print res)
 ;    (print (penalty-fn-multi problem state))
 ;    (print state)
-    res))
+	res)))
 
 (defmethod fitness-fn ((problem sat-problem) (state bit-vector))
   (apply #'+
@@ -53,7 +55,7 @@
 )
 
 (defmethod penalty-fn-add ((problem sat-problem) (state bit-vector)) 
-  "Compute penalty koeficient in range <0,1>"
+  "Compute penalty koeficient"
   (let ((result 0))
     (dolist (cl (get-unsatisfied-clauses problem state))
       (incf result (get-largest-literal-weight cl)))

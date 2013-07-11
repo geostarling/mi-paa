@@ -1,5 +1,5 @@
 ;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*- File: genetic.lisp
-(declaim (optimize (speed 0) (safety 3) (debug 3)))
+(declaim (optimize (speed 0) (safety 0) (debug 3)))
 
 
 
@@ -15,7 +15,7 @@
   (repopulation-fn (make-simple-repopulation) :type function)
 
   (selection-fn (make-roulette-selection) :type function)
-  (crossover-fn (make-one-point-crossover) :type function)
+  (crossover-fn (make-one-point-crossover 0.01) :type function)
   (mutation-fn (make-bit-flip-mutation 0.01) :type function)
   )
 
@@ -31,6 +31,7 @@
   "Some useful comment."
 
   (let* ((iter-res nil)
+;	 (iter-count 0)
 	 (pop-init-fn (ga-config-population-init-fn config))
 	 (pop-size (ga-config-population-size config))
 	 (stop-crit-fn (ga-config-stopping-criterion-fn config))
@@ -43,7 +44,6 @@
 	 (result (make-result))
 	 (population (make-population pop-init-fn pop-size problem))
 	 )
-
     (loop until (reached-stopping-criterion? stop-crit-fn population) 
 ;       do (break)
        do (rescale scale-fn (population-pool population))
@@ -57,6 +57,7 @@
 ;       do (print "update result set")
        do (setf iter-res (get-result population problem))
 ;       do (setf (result-history result) (push (get-real-fitness iter-res problem) (result-history result)))
+;       do (incf iter-count)
        do (setf (result-satisfied result) (is-satisfied problem (genome-state iter-res))))
     
     (setf (result-history result) (push (get-real-fitness iter-res problem) (result-history result)))
@@ -188,9 +189,54 @@
     (setf (genome-scaled-fitness gen) (genome-fitness gen)))
   genome-pool)
 
-;(defmethod linear-scaling-scheme ((genome-pool list))
+(defmethod make-linear-scaling-scheme ((pressure-koef float))
+  "Takes result of problem's objective function as genome's fitness. I.E. does no rescaling."
+  (lambda (genome-pool) (linear-scaling-scheme genome-pool pressure-koef)))
 
-;)
+(defmethod linear-scaling-scheme ((genome-pool list) (pressure-coef float))
+  (let* ((zmax (apply #'max (map 'list #'genome-fitness genome-pool)))
+	 (zmin (apply #'min (map 'list #'genome-fitness genome-pool)))
+	 (z2 zmax)
+	 (z1 (+ (* (- zmax zmin) pressure-coef) zmin)))
+    (dolist (gen genome-pool)
+      (let ((raw-fitness (genome-fitness gen)))
+	(setf (genome-scaled-fitness gen) 
+	      (+ z1 
+		 (* (- raw-fitness zmin) 
+		    (/ 
+		     (- z2 z1) 
+		     (- zmax zmin)))))))
+    genome-pool))
+
+
+(defmethod make-linear-avg-scaling-scheme ((pressure-koef float))
+  "Takes result of problem's objective function as genome's fitness. I.E. does no rescaling."
+  (lambda (genome-pool) (linear-avg-scaling-scheme genome-pool pressure-koef)))
+
+
+(defmethod linear-avg-scaling-scheme ((genome-pool list) (pressure-coef float))
+  (let* ((fitness-list (map 'list #'genome-fitness genome-pool))
+	 (zmax (apply #'max fitness-list))
+	 (len (length fitness-list))
+	 (avg (/ (apply #'+ fitness-list) len))
+	 (d-coef (- zmax avg))
+	 (a-coef (/ (* (- pressure-coef 1) avg) d-coef))
+	 (b-coef (/ (* avg (- zmax (* pressure-coef avg))) d-coef)))
+      
+    (dolist (gen genome-pool)
+      (setf (genome-scaled-fitness gen) 
+	    (+ (* a-coef (genome-fitness gen))
+	       b-coef)))
+    genome-pool))
+
+
+;(defmethod ranking-scaling-scheme ((genome-pool list))
+;  (dolist (gen genome-pool)
+;    (setf (genome-scaled-fitness gen) (genome-fitness gen)))
+;  genome-pool)
+
+
+
 
 ;(defmethod ranking-scaling-scheme ((genome-pool list))
 ;  (let ((min (min (map 'list #'genome-fitness genome-pool)))
@@ -243,28 +289,6 @@
 	 do (push genome result-pool))
       result-pool)))
 
-(defun make-complex-repopulation (&optional (elite-count 1))
-; TBD check elite-count boundary
-  (lambda (population genome-pool)
-    (let
-	((old-pool (sort 
-		    (copy-list (population-pool population))
-		    #'>
-		    :key #'genome-fitness))
-	 (new-pool (sort (copy-list genome-pool) #'> :key #'genome-fitness))
-	 (result-pool nil))
-      (dotimes (idx elite-count)  ;; add elite into result
-	(push (first old-pool) result-pool)
-	(setf old-pool (rest old-pool)))
-      (loop for genome in new-pool
-	 until (= (length result-pool) (length genome-pool))
-	 do (push genome result-pool))
-      result-pool)))
-
-
-(defun make-steady-state-repopulation ()
-  nil 
-)
 
 ;;;; Selections
 
@@ -279,13 +303,16 @@
 (defun roulette-selection (population)
   ;; tady je problem v pripade kdy maji vschny genomy fitness 0 tak random vrati chybu
   (let* ((fitness-sum (apply #'+ (map 'list #'genome-scaled-fitness (population-pool population))))
-	(random-roll (random fitness-sum)))
+	(random-roll (random (1+ fitness-sum))))
 
     (defun inner-loop (genomes-list roll-remainder)
-      (if (< roll-remainder (genome-scaled-fitness (first genomes-list)))
+      (if (rest genomes-list)
+	  (if (< roll-remainder (genome-scaled-fitness (first genomes-list)))
+	      (first genomes-list)
+	      (inner-loop (rest genomes-list) 
+			  (- roll-remainder (genome-scaled-fitness (first genomes-list)))))
 	  (first genomes-list)
-	  (inner-loop (rest genomes-list) 
-		      (- roll-remainder (genome-scaled-fitness (first genomes-list))))))
+	  ))
     (inner-loop (population-pool population) random-roll)))
 
 ;;;; Mutations; uses side effects!!
@@ -324,49 +351,85 @@
 
 ;;;; Crossovers; dont use side effects
 
-(defun make-one-point-crossover ()
-  #'one-point-crossover)
+(defmethod make-one-point-crossover ((crossover-rate float))
+  (if (or (< crossover-rate 0.0) (> crossover-rate 1.0))
+      (error "Crossover rate must be from interval [0.0 - 1.0]")
+      (lambda (x-genome y-genome) (one-point-crossover crossover-rate x-genome y-genome))))
 
-(defmethod one-point-crossover ((x-genome genome-bit-vector) (y-genome genome-bit-vector))
+
+(defmethod one-point-crossover ((crossover-rate float) (x-genome genome-bit-vector) (y-genome genome-bit-vector))
   "NOT effective!!!"
-  (let (
-	(mask-vec (fill 
-		   (make-sequence 'bit-vector 
-				  (length (genome-state x-genome))
-				  :initial-element 0)
-		   1 :end (random (length (genome-state x-genome)))))) ; random crosspoint
 
-    (list (make-genome (bit-ior                               ;new x-genome
-			(bit-and (genome-state y-genome) mask-vec)
-			(bit-and (genome-state x-genome) (bit-not mask-vec)) 
-			t))
-	  (make-genome (bit-ior                               ;new y-genome
-			(bit-and (genome-state x-genome) mask-vec)
-			(bit-and (genome-state y-genome) (bit-not mask-vec)) 
-			t)))))
+  (if (< crossover-rate (random 1.0))
+      (list x-genome y-genome)
+      (let (
+	    (mask-vec (fill 
+		       (make-sequence 'bit-vector 
+				      (length (genome-state x-genome))
+				      :initial-element 0)
+		       1 :end (random (length (genome-state x-genome)))))) ; random crosspoint
+	
+	(list (make-genome (bit-ior                               ;new x-genome
+			    (bit-and (genome-state y-genome) mask-vec)
+			    (bit-and (genome-state x-genome) (bit-not mask-vec)) 
+			    t))
+	      (make-genome (bit-ior                               ;new y-genome
+			    (bit-and (genome-state x-genome) mask-vec)
+			    (bit-and (genome-state y-genome) (bit-not mask-vec)) 
+			    t))))))
 
-(defmethod two-point-crossover ((x-genome genome-bit-vector) (y-genome genome-bit-vector))
+(defmethod make-two-point-crossover ((crossover-rate float))
+  (if (or (< crossover-rate 0.0) (> crossover-rate 1.0))
+      (error "Crossover rate must be from interval [0.0 - 1.0]")
+      (lambda (x-genome y-genome) (two-point-crossover crossover-rate x-genome y-genome))))
+
+
+(defmethod two-point-crossover ((crossover-rate float) (x-genome genome-bit-vector) (y-genome genome-bit-vector))
   "NOT effective!!!"
-  (let* ((len (length (genome-state x-genome)))
-	 (start (random len))
-	 (end (+ start (random (- len start))))
-	 (mask-vec (fill 
-		   (make-sequence 'bit-vector 
-				  (length (genome-state x-genome))
-				  :initial-element 0)
-		   1		   
-		   :start start
-		   :end end
-		   )))
-    (list (make-genome (bit-ior                               ;new x-genome
-			(bit-and (genome-state y-genome) mask-vec)
-			(bit-and (genome-state x-genome) (bit-not mask-vec)) 
-			t))
-	  (make-genome (bit-ior                               ;new y-genome
-			(bit-and (genome-state x-genome) mask-vec)
-			(bit-and (genome-state y-genome) (bit-not mask-vec)) 
-			t)))))
+  (if (< crossover-rate (random 1.0))
+      (list x-genome y-genome)
 
+      (let* ((len (length (genome-state x-genome)))
+	     (start (random len))
+	     (end (+ start (random (- len start))))
+	     (mask-vec (fill 
+			(make-sequence 'bit-vector 
+				       (length (genome-state x-genome))
+				       :initial-element 0)
+			1		   
+			:start start
+			:end end
+			)))
+	(list (make-genome (bit-ior                               ;new x-genome
+			    (bit-and (genome-state y-genome) mask-vec)
+			    (bit-and (genome-state x-genome) (bit-not mask-vec)) 
+			    t))
+	      (make-genome (bit-ior                               ;new y-genome
+			    (bit-and (genome-state x-genome) mask-vec)
+			    (bit-and (genome-state y-genome) (bit-not mask-vec)) 
+			    t))))))
+
+(defmethod make-uniform-crossover ((crossover-rate float))
+  (if (or (< crossover-rate 0.0) (> crossover-rate 1.0))
+      (error "Crossover rate must be from interval [0.0 - 1.0]")
+      (lambda (x-genome y-genome) (uniform-crossover crossover-rate x-genome y-genome))))
+
+
+(defmethod uniform-crossover ((crossover-rate float) (x-genome genome-bit-vector) (y-genome genome-bit-vector))
+  "NOT effective!!!"
+  (if (< crossover-rate (random 1.0))
+      (list x-genome y-genome)
+
+      (let* ((len (length (genome-state x-genome)))
+	     (mask-vec (make-random-bit-vector len)))
+	(list (make-genome (bit-ior                               ;new x-genome
+			    (bit-and (genome-state y-genome) mask-vec)
+			    (bit-and (genome-state x-genome) (bit-not mask-vec)) 
+			    t))
+	      (make-genome (bit-ior                               ;new y-genome
+			    (bit-and (genome-state x-genome) mask-vec)
+			    (bit-and (genome-state y-genome) (bit-not mask-vec)) 
+			    t))))))
 
 
 
