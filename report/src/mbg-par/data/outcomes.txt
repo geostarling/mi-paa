@@ -1,0 +1,16 @@
+graf01
+4
+graf02
+3
+graf03
+nedobehlo
+graf04
+nedobehlo
+graf05
+4
+graf06
+3
+graf07
+7
+graf09
+5
